@@ -3,9 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 print(tf.config.experimental.list_physical_devices())
-with tf.device("/GPU:0"):
-    test_val = tf.constant(3)
-    print(test_val)
+print(tf.test.is_gpu_available())
 inputs = keras.Input(shape=(784,), name='digits')
 x = layers.Dense(64, activation='relu', name='dense_1')(inputs)
 x = layers.Dense(64, activation='relu', name='dense_2')(x)
