@@ -44,7 +44,7 @@ class RHQueueTests(unittest.TestCase):
   def test_with_envvar_venv(self):
     val = copy.copy(self.base_args)
     val.remove("v")
-    subprocess.run(f"export RHQ_VENV=\"{self.v}\"")
+    subprocess.run(f"export RHQ_VENV=\"{self.v}\"", shell=True)
     script = subprocess.run(self.args("test_venv.py", val))
     self.assertEqual(script.returncode, 0)
 
