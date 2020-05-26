@@ -1,6 +1,7 @@
 import unittest
 import subprocess
 import os
+import copy
 
 
 class RHQueueTests(unittest.TestCase):
@@ -31,7 +32,9 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
 
   def test_without_venv(self):
-    script = subprocess.run(self.args("test_venv.py", self.base_args - ["v"]))
+    val = copy.copy(self.base_args)
+    val.remove("v")
+    script = subprocess.run(self.args("test_venv.py", val))
     self.assertEqual(script.returncode, 0)
 
   def test_with_venv(self):
@@ -39,8 +42,10 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
 
   def test_with_envvar_venv(self):
+    val = copy.copy(self.base_args)
+    val.remove("v")
     subprocess.run(f"export RHQ_VENV=\"{self.v}\"")
-    script = subprocess.run(self.args("test_venv.py", self.base_args - ["v"]))
+    script = subprocess.run(self.args("test_venv.py", val))
     self.assertEqual(script.returncode, 0)
 
   def test_begin_time(self):
