@@ -2,6 +2,7 @@
 import argparse
 import subprocess
 import os
+import datetime
 from rhqueue import *
 
 def run_process(proc):
@@ -51,25 +52,23 @@ processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
 # base sbatch arguments
 processor.add_sbatchline("--priority", args.priority)
 processor.add_sbatchline("--ntasks", "1")
-processor.add_sbatchline("-o", args.output_file)
+output_file = args.output_file if args.output_file else "my.stdout"
+processor.add_sbatchline("-o", output_file)
 
 if args.begin_time:
   processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
+  print(f"begin time approx: {datetime.datetime.now()+ datetime.time(minute=int(args.begin_time))}")
 
 # Handle Email
-email = ""
-try:
-  email = os.environ["RHQ_EMAIL"]
-except:
-  pass
+email = os.environ.get("RHQ_EMAIL", "")
 email = args.email if args.email else email
 
 if email:
   processor.add_scriptline("./send_email_start {}".format(email), -10)
   processor.add_scriptline("./send_email_end {}".format(email), 2)
+  print(f"email: {email}")
 
-venv = ""
-venv = os.environ.get("RHQ_VENV",venv)
+venv = os.environ.get("RHQ_VENV","")
 venv = os.environ.get("VIRTUAL_ENV", venv)
 venv = args.venv if not venv else venv
 
@@ -77,14 +76,14 @@ venv = args.venv if not venv else venv
 if venv:
   processor.add_scriptline("source {}/bin/activate".format(venv), -1)
   processor.add_scriptline("deactivate", 1)
+  print(f"venv: {venv}")
 
 if args.titan:
-  print(args.titan)
   titans = args.titan.split(",") if "," in args.titan else args.titan
   w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
   processor.add_sbatchline("-w", w_string.format(",".join(titans)))
+  print(f"titans:{w_string.format(','.join(titans))}")
 
-print(venv)
 processor.add_scriptline("chmod +x {}".format(args.script), -2)
 
 processor.write_file()
