@@ -34,7 +34,7 @@ class RHQueueTests(unittest.TestCase):
     script = subprocess.run(self.args("test_create_file.py"))
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile("./new_file.txt"))
-    
+    time.sleep(2)
     self.assertFileContentsSame("./new_file.txt", "new file is created")
 
   def test_tensorflow(self):
@@ -48,7 +48,6 @@ class RHQueueTests(unittest.TestCase):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
     script = subprocess.run(self.args("test_venv.py", val))
     self.assertEqual(script.returncode, 0)
-    time.sleep(2)
     self.assertFileContentsSame(self.o, "None")
 
   def test_with_venv(self):
