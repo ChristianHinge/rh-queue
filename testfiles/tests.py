@@ -84,6 +84,7 @@ class RHQueueTests(unittest.TestCase):
 
   @classmethod
   def tearDown(cls):
+    time.sleep(10)
     files = glob.glob("*.stdout")
     files += glob.glob("*.txt")
     for file in files:
