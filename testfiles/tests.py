@@ -68,9 +68,10 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile(self.o))
 
-
+  # @classmethod
+  # def tearDownClass(cls):
+  #   pass
 if __name__ == "__main__":
   test = RHQueueTests()
   print(test.args(""))
-  print(test.get_function_name())
   # unittest.main()
