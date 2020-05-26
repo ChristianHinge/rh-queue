@@ -82,13 +82,13 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile(self.o))
 
-  @classmethod
-  def tearDown(cls):
-    time.sleep(10)
-    files = glob.glob("*.stdout")
-    files += glob.glob("*.txt")
-    for file in files:
-      os.remove(f"./{file}")
+  # @classmethod
+  # def tearDown(cls):
+  #   time.sleep(10)
+  #   files = glob.glob("*.stdout")
+  #   files += glob.glob("*.txt")
+  #   for file in files:
+  #     os.remove(f"./{file}")
 
 
 if __name__ == "__main__":
