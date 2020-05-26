@@ -18,13 +18,16 @@ class RHQueueTests(unittest.TestCase):
   base_args = ["v", "t", "o"]
   begin_args = ["v", "t", "o", "p"]
   files = []
+
   @property
   def o(self):
     self.files.append(self._o)
     return self._o
+
   @o.setter
   def o(self, value):
     self._o = value
+
   def args(self, file, args=["v", "t", "o"]):
 
     ret = ["rhqueue", file]
@@ -75,7 +78,6 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     del os.environ["RHQ_VENV"]
     self.assertFileContentsSame(self.o, self.v)
-    
 
   def test_begin_time(self):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
@@ -98,6 +100,8 @@ class RHQueueTests(unittest.TestCase):
     files += glob.glob("*.txt")
     for file in files:
       os.remove(f"./{file}")
+
+
 if __name__ == "__main__":
   test = RHQueueTests()
   print(test.args(""))
