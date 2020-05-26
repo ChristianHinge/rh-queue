@@ -22,7 +22,9 @@ class RHQueueTests(unittest.TestCase):
   def o(self):
     self.files.append(self._o)
     return self._o
-  
+  @o.setter
+  def o(self, value):
+    self._o = value
   def args(self, file, args=["v", "t", "o"]):
 
     ret = ["rhqueue", file]
