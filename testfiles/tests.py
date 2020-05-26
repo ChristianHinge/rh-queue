@@ -57,4 +57,4 @@ class RHQueueTests(unittest.TestCase):
 if __name__ == "__main__":
   test = RHQueueTests()
   print(test.args(""))
-  # unittest.main()
+  unittest.main()
