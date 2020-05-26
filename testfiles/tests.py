@@ -23,12 +23,17 @@ class RHQueueTests(unittest.TestCase):
       ret.extend([f"-{val}", getattr(self, val)])
     return ret
 
+  def assertFileContentsSame(self, file, expected):
+    with open(self.o, "r") as f:
+      val = f.read()
+      self.assertEqual(val, expected)
 
   def test_create_file(self):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
     script = subprocess.run(self.args("test_create_file.py"))
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile("./new_file.txt"))
+    self.assertFileContentsSame("./new_file.txt", "new file is created")
 
   def test_tensorflow(self):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
@@ -41,11 +46,13 @@ class RHQueueTests(unittest.TestCase):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
     script = subprocess.run(self.args("test_venv.py", val))
     self.assertEqual(script.returncode, 0)
+    self.assertFileContentsSame(self.o, "None")
 
   def test_with_venv(self):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
     script = subprocess.run(self.args("test_venv.py"))
     self.assertEqual(script.returncode, 0)
+    self.assertFileContentsSame(self.o, self.v)
 
   def test_with_envvar_venv(self):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
@@ -55,12 +62,15 @@ class RHQueueTests(unittest.TestCase):
     script = subprocess.run(self.args("test_venv.py", val))
     self.assertEqual(script.returncode, 0)
     del os.environ["RHQ_VENV"]
+    self.assertFileContentsSame(self.o, self.v)
+    
 
   def test_begin_time(self):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
     self.b = "1"
     script = subprocess.run(self.args("test_venv.py", self.base_args + ["b"]))
     self.assertEqual(script.returncode, 0)
+    self.assertFileContentsSame(self.o, self.v)
 
   def test_output_file(self):
     self.o = "test_output_file.stdout"
