@@ -10,7 +10,7 @@ class RHQueueTests(unittest.TestCase):
   o = "my.stdout"
   p = "3"
   e = "peter.nicolas.castenschiold.mcdaniel@regionh.dk"
-  b = 3
+  b = "3"
   args_lst = []
   base_args = ["v", "t", "o"]
   begin_args = ["v", "t", "o", "p"]
