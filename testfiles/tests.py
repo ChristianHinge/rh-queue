@@ -44,9 +44,10 @@ class RHQueueTests(unittest.TestCase):
   def test_with_envvar_venv(self):
     val = copy.copy(self.base_args)
     val.remove("v")
-    subprocess.run(f"export RHQ_VENV=\"{self.v}\"", shell=True)
+    os.environ["RHQ_VENV"] = self.v
     script = subprocess.run(self.args("test_venv.py", val))
     self.assertEqual(script.returncode, 0)
+    del os.environ["RHQ_VENV"]
 
   def test_begin_time(self):
     self.begin_time = "1"
