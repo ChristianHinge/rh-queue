@@ -28,7 +28,7 @@ class RHQueueTests(unittest.TestCase):
   def assertFileContentsSame(self, file, expected):
     val = ""
     while not os.path.isfile(file):
-      continue
+      time.sleep(1)
     with open(self.o, "r") as f:
       val = f.read().rstrip("\n")
     self.assertEqual(val, expected)
