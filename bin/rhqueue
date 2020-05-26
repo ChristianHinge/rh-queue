@@ -70,11 +70,8 @@ if email:
 
 venv = ""
 venv = os.environ.get("RHQ_VENV",venv)
-print(venv)
 venv = os.environ.get("VIRTUAL_ENV", venv)
-print(venv)
 venv = args.venv if not venv else venv
-print(venv)
 
 
 if venv:
