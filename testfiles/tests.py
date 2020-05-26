@@ -10,23 +10,14 @@ import glob
 class RHQueueTests(unittest.TestCase):
   v = "/homes/pmcd/venv/test-slurm"
   t = "1"
-  _o = "my.stdout"
+  o = "my.stdout"
   p = "3"
   e = "peter.nicolas.castenschiold.mcdaniel@regionh.dk"
   b = "3"
   args_lst = []
   base_args = ["v", "t", "o"]
   begin_args = ["v", "t", "o", "p"]
-  files = []
 
-  @property
-  def o(self):
-    self.files.append(self._o)
-    return self._o
-
-  @o.setter
-  def o(self, value):
-    self._o = value
 
   def args(self, file, args=["v", "t", "o"]):
 
@@ -92,14 +83,8 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile(self.o))
 
-  @classmethod
-  def tearDownClass(cls):
-    while all([os.path.isfile(file) for file in self.files]):
-      time.sleep(1)
-    files = glob.glob("*.stdout")
-    files += glob.glob("*.txt")
-    for file in files:
-      os.remove(f"./{file}")
+  def tearDown(self):
+    os.remove(self.o)
 
 
 if __name__ == "__main__":
