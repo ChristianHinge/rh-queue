@@ -4,6 +4,7 @@ import os
 import copy
 import inspect
 import time
+import glob
 
 
 class RHQueueTests(unittest.TestCase):
@@ -25,16 +26,17 @@ class RHQueueTests(unittest.TestCase):
     return ret
 
   def assertFileContentsSame(self, file, expected):
-    with open(self.o, "r") as f:
-      val = f.read().rstrip("\n")
-      self.assertEqual(val, expected)
+    val = ""
+    while not os.path.isfile(file):
+      with open(self.o, "r") as f:
+        val = f.read().rstrip("\n")
+    self.assertEqual(val, expected)
 
   def test_create_file(self):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
     script = subprocess.run(self.args("test_create_file.py"))
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile("./new_file.txt"))
-    time.sleep(2)
     self.assertFileContentsSame("./new_file.txt", "new file is created")
 
   def test_tensorflow(self):
@@ -80,9 +82,12 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile(self.o))
 
-  # @classmethod
-  # def tearDownClass(cls):
-  #   pass
+  @classmethod
+  def tearDownClass(cls):
+    files = glob.glob("*.stdout")
+    files += glob.glob("*.txt")
+    for file in files:
+      os.remove(f"./{file}")
 if __name__ == "__main__":
   test = RHQueueTests()
   print(test.args(""))
