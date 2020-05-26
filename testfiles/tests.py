@@ -29,7 +29,7 @@ class RHQueueTests(unittest.TestCase):
     val = ""
     while not os.path.isfile(file):
       time.sleep(3)
-    with open(self.o, "r") as f:
+    with open(file, "r") as f:
       val = f.read().rstrip("\n")
       print(val)
     self.assertEqual(val, expected)
