@@ -18,7 +18,6 @@ class RHQueueTests(unittest.TestCase):
   base_args = ["v", "t", "o"]
   begin_args = ["v", "t", "o", "p"]
 
-
   def args(self, file, args=["v", "t", "o"]):
 
     ret = ["rhqueue", file]
@@ -83,8 +82,12 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile(self.o))
 
-  def tearDown(self):
-    os.remove(self.o)
+  @classmethod
+  def tearDown(cls):
+    files = glob.glob("*.stdout")
+    files += glob.glob("*.txt")
+    for file in files:
+      os.remove(f"./{file}")
 
 
 if __name__ == "__main__":
