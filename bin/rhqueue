@@ -57,7 +57,7 @@ processor.add_sbatchline("-o", output_file)
 
 if args.begin_time:
   processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
-  print(f"begin time approx: {datetime.datetime.now()+ datetime.time(minute=int(args.begin_time))}")
+  print(f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}")
 
 # Handle Email
 email = os.environ.get("RHQ_EMAIL", "")
