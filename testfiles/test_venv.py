@@ -1,2 +1,3 @@
 #!/usr/bin/env python
-    print("venv = {}".format(os.environ.get("VIRTUAL_ENV")))
+import os
+print("venv = {}".format(os.environ.get("VIRTUAL_ENV")))
