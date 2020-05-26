@@ -68,11 +68,11 @@ if email:
   processor.add_scriptline("./send_email_end {}".format(email), 2)
   print(f"email: {email}")
 
+
+#Handle venv
 venv = os.environ.get("RHQ_VENV","")
 venv = os.environ.get("VIRTUAL_ENV", venv)
 venv = args.venv if not venv else venv
-
-
 if venv:
   processor.add_scriptline("source {}/bin/activate".format(venv), -1)
   processor.add_scriptline("deactivate", 1)
