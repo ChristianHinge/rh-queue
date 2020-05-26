@@ -50,7 +50,8 @@ class RHQueueTests(unittest.TestCase):
 
   def test_begin_time(self):
     self.begin_time = "1"
-    script = subprocess.run(self.args("test_venv.py", self.base_args))
+    script = subprocess.run(self.args("test_venv.py", self.base_args + ["b"]))
+    self.assertEqual(script.returncode, 0)
 
   def test_output_file(self):
     self.o = "test.stdout"

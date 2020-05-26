@@ -70,8 +70,11 @@ if email:
 
 venv = ""
 venv = os.environ.get("RHQ_VENV",venv)
+print(venv)
 venv = os.environ.get("VIRTUAL_ENV", venv)
+print(venv)
 venv = args.venv if not venv else venv
+print(venv)
 
 
 if venv:
@@ -83,8 +86,7 @@ if args.titan:
   titans = args.titan.split(",") if "," in args.titan else args.titan
   w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
   processor.add_sbatchline("-w", w_string.format(",".join(titans)))
-  #processor.add_sbatchline("-m", "arbitrary")
-  #processor.add_sbatchline("--nodes", "1-1")
+
 print(venv)
 processor.add_scriptline("chmod +x {}".format(args.script), -2)
 
