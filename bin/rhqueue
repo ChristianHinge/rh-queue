@@ -46,7 +46,7 @@ parser.add_argument("-t", "--titan", type=str,
 args = parser.parse_args()
 
 # base script at 0 as this is the "center" point
-processor.add_scriptline("srun -n1 -l ./{}".format(args.script), 0)
+processor.add_scriptline("srun -n1 ./{}".format(args.script), 0)
 processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
 
 # base sbatch arguments
