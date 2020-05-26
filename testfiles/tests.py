@@ -10,14 +10,19 @@ import glob
 class RHQueueTests(unittest.TestCase):
   v = "/homes/pmcd/venv/test-slurm"
   t = "1"
-  o = "my.stdout"
+  _o = "my.stdout"
   p = "3"
   e = "peter.nicolas.castenschiold.mcdaniel@regionh.dk"
   b = "3"
   args_lst = []
   base_args = ["v", "t", "o"]
   begin_args = ["v", "t", "o", "p"]
-
+  files = []
+  @property
+  def o(self):
+    self.files.append(self._o)
+    return self._o
+  
   def args(self, file, args=["v", "t", "o"]):
 
     ret = ["rhqueue", file]
@@ -85,6 +90,8 @@ class RHQueueTests(unittest.TestCase):
 
   @classmethod
   def tearDownClass(cls):
+    while all([os.path.isfile(file) for file in self.files]):
+      time.sleep(1)
     files = glob.glob("*.stdout")
     files += glob.glob("*.txt")
     for file in files:
