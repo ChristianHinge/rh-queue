@@ -31,6 +31,7 @@ class RHQueueTests(unittest.TestCase):
       time.sleep(3)
     with open(self.o, "r") as f:
       val = f.read().rstrip("\n")
+      print(val)
     self.assertEqual(val, expected)
 
   def test_create_file(self):
