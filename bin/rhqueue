@@ -87,8 +87,8 @@ class RHQueueParser(object):
     # base sbatch arguments
     self.processor.add_sbatchline("--priority", args.priority)
     self.processor.add_sbatchline("--ntasks", "1")
-    output_file = args.output_file if args.output_file else "my.stdout"
-    self.processor.add_sbatchline("-o", output_file)
+    self.processor.add_sbatchline("--gres", "gpu:titan:1")
+    self.processor.add_sbatchline("-o", getattr(args, "output_file", "my.stdout"))
 
     if args.begin_time:
       self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
