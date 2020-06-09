@@ -83,13 +83,23 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile(self.o))
 
-  # @classmethod
-  # def tearDown(cls):
-  #   time.sleep(10)
-  #   files = glob.glob("*.stdout")
-  #   files += glob.glob("*.txt")
-  #   for file in files:
-  #     os.remove(f"./{file}")
+  def test_shebang_env(self):
+    self.o = "test_shebang_env.stdout"
+    script = subprocess.run(self.args("test_shebang_env.py"))
+    self.assertEqual(script.returncode, 0)
+    self.assertFileContentsSame(self.o, "/homes/pmcd/venv/test-slurm/bin/python3")
+
+  def test_shebang_venv(self):
+    self.o = "test_shebang_venv.stdout"
+    script = subprocess.run(self.args("test_shebang_venv.py"))
+    self.assertEqual(script.returncode, 0)
+    self.assertFileContentsSame(self.o, "/homes/pmcd/venv/test-slurm/bin/python3")
+
+  def test_shebang_bin(self):
+    self.o = "test_shebang_bin.stdout"
+    script = subprocess.run(self.args("test_shebang_bin.py"))
+    self.assertEqual(script.returncode, 0)
+    self.assertFileContentsSame(self.o, "/usr/bin/python3")
 
 
 if __name__ == "__main__":
