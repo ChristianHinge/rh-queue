@@ -4,13 +4,13 @@ import subprocess
 import os
 import datetime
 import sys
-# from rhqueue import *
+from rhqueue import *
 
 
 class RHQueueParser(object):
 
   def __init__(self) -> None:
-    # self.processor = ScriptCreatorClass()
+    self.processor = ScriptCreatorClass()
     parser = argparse.ArgumentParser(description="RHQueue")
     parser.add_argument(
         "command", help="The subcommand to run options are queue,remove,info")
@@ -53,51 +53,51 @@ class RHQueueParser(object):
       help="Define the titans that the script can run on. Comma Seperated values")
     args = parser.parse_args(sys.argv[2:])
     print(args)
-    # # base script at 0 as this is the "center" point
-    # self.processor.add_scriptline("srun -n1 ./{}".format(args.script), 0)
-    # self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
+    # base script at 0 as this is the "center" point
+    self.processor.add_scriptline("srun -n1 ./{}".format(args.script), 0)
+    self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
 
-    # # base sbatch arguments
-    # self.processor.add_sbatchline("--priority", args.priority)
-    # self.processor.add_sbatchline("--ntasks", "1")
-    # output_file = args.output_file if args.output_file else "my.stdout"
-    # self.processor.add_sbatchline("-o", output_file)
+    # base sbatch arguments
+    self.processor.add_sbatchline("--priority", args.priority)
+    self.processor.add_sbatchline("--ntasks", "1")
+    output_file = args.output_file if args.output_file else "my.stdout"
+    self.processor.add_sbatchline("-o", output_file)
 
-    # if args.begin_time:
-    #   self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
-    #   print(f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}")
+    if args.begin_time:
+      self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
+      print(f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}")
 
-    # # Handle Email
-    # email = os.environ.get("RHQ_EMAIL", "")
-    # email = args.email if args.email else email
+    # Handle Email
+    email = os.environ.get("RHQ_EMAIL", "")
+    email = args.email if args.email else email
 
-    # if email:
-    #   self.processor.add_scriptline("./send_email_start {}".format(email), -10)
-    #   self.processor.add_scriptline("./send_email_end {}".format(email), 2)
-    #   print(f"email: {email}")
+    if email:
+      self.processor.add_scriptline("./send_email_start {}".format(email), -10)
+      self.processor.add_scriptline("./send_email_end {}".format(email), 2)
+      print(f"email: {email}")
 
     #Handle venv
     venv = os.environ.get("RHQ_VENV","")
     venv = os.environ.get("VIRTUAL_ENV", venv)
     venv = args.venv if args.venv else venv
-    # if venv:
-    #   self.processor.add_scriptline("source {}/bin/activate".format(venv), -1)
-    #   self.processor.add_scriptline("deactivate", 1)
-    #   print(f"venv: {venv}")
+    if venv:
+      self.processor.add_scriptline("source {}/bin/activate".format(venv), -1)
+      self.processor.add_scriptline("deactivate", 1)
+      print(f"venv: {venv}")
 
-    # if args.titan:
-    #   titans = args.titan.split(",") if "," in args.titan else args.titan
-    #   w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
-    #   self.processor.add_sbatchline("-w", w_string.format(",".join(titans)))
-    #   print(f"titans:{w_string.format(','.join(titans))}")
+    if args.titan:
+      titans = args.titan.split(",") if "," in args.titan else args.titan
+      w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
+      self.processor.add_sbatchline("-w", w_string.format(",".join(titans)))
+      print(f"titans:{w_string.format(','.join(titans))}")
 
-    # self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
+    self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
 
-    # self.processor.write_file()
-    # script = "sbatch ./{}".format(self.processor.script_name)
-    # subprocess.call(["chmod +x {}".format(args.script)], stdout=subprocess.PIPE, shell=True)
-    # subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
-    # subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+    self.processor.write_file()
+    script = "sbatch ./{}".format(self.processor.script_name)
+    subprocess.call(["chmod +x {}".format(args.script)], stdout=subprocess.PIPE, shell=True)
+    subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
+    subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
   def info(self):
     print("info")
 
