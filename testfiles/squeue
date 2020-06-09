@@ -1,0 +1,13 @@
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+
+               290      main script.s     pmcd PD       0:00      1 (Resources)
+
+               288      main script.s     pmcd  R       0:05      1 titan4
+
+               289      main script.s     pmcd  R       0:05      1 titan5
+
+               286      main script.s     pmcd  R       0:08      1 titan1
+
+               287      main script.s     pmcd  R       0:08      1 titan2
+
+               285      main script.s     pmcd  R       0:14      1 titan3
