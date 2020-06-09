@@ -123,6 +123,7 @@ class RHQueueParser(object):
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
 
     self.processor.write_file()
+    print("test")
     script = "sbatch ./{}".format(self.processor.script_name)
     subprocess.call(["chmod +x {}".format(args.script)],
                     stdout=subprocess.PIPE,
