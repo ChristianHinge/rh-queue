@@ -133,7 +133,7 @@ class RHQueueParser(object):
   def info(self):
     info = subprocess.Popen(["squeue"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     with open("./squeue", "a+") as f:
-      f.writelines(info.stdout.readlines())
+      f.write(b"\n".join(info.stdout.readlines()).decode("utf-8"))
     print(getpass.getuser())
 
 
