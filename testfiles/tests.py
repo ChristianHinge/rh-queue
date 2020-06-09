@@ -20,7 +20,7 @@ class RHQueueTests(unittest.TestCase):
 
   def args(self, file, args=["v", "t", "o"]):
 
-    ret = ["rhqueue", file]
+    ret = ["rhqueue", "queue", file]
     for val in args:
       ret.extend([f"-{val}", getattr(self, val)])
     return ret
