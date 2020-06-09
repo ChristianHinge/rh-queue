@@ -3,91 +3,104 @@ import argparse
 import subprocess
 import os
 import datetime
-from rhqueue import *
-
-def run_process(proc):
-  res = subprocess.call([proc], 
-    stdout=subprocess.PIPE,
-    stdin=subprocess.PIPE,
-    stderr=subprocess.PIPE, 
-    shell=True).stdout
-  res = res[:-1].decode()
-  return res
+import sys
+# from rhqueue import *
 
 
-processor = ScriptCreatorClass()
-parser = argparse.ArgumentParser(description="RHQueue")
+class RHQueueParser(object):
 
-parser.add_argument("script", metavar="script", type=str, 
-  help="The script to run on a gpu\n"
-  + "at the top of each file there must be the shebang '#!/usr/bin/env python -u\n")
+  def __init__(self) -> None:
+    # self.processor = ScriptCreatorClass()
+    parser = argparse.ArgumentParser(description="RHQueue")
+    parser.add_argument(
+        "command", help="The subcommand to run options are queue,remove,info")
+    args = parser.parse_args(sys.argv[1:2])
+    if not hasattr(self, args.command):
+      print("not found")
+      parser.print_help()
+      exit(1)
+    getattr(self, args.command)()
 
-parser.add_argument("-v", "--venv", metavar="venv", type=str,
-  help="The virtual environment used for the project")
+  def remove(self):
+    print("remove")
 
-parser.add_argument("-p", "--priority",type=str, choices=["1", "2", "3", "4", "5"], default="3",
-  help="The priority of the script"+
-  "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY.")
+  def queue(self):
+    print("queue")
+    parser = argparse.ArgumentParser(description="RHQueue")
+    parser.add_argument("script", metavar="script", type=str,
+      help="The script to run on a gpu\n"
+      + "at the top of each file there must be the shebang '#!/usr/bin/env python -u\n")
 
-parser.add_argument("-e", "--email", type=str,
-  help="The email to send to when the script begins and ends.\n"+
-  "Can be defined as environment variable (export RHQ_EMAIL=<email>) to always send to that email." +
-  "This will prefer the email given in the argument line over the environtment variable")
+    parser.add_argument("-v", "--venv", metavar="venv", type=str,
+      help="The virtual environment used for the project")
 
-parser.add_argument("-o", "--output-file", type=str, default="my.stdout",
-  help="The file for the output of the script")
+    parser.add_argument("-p", "--priority",type=str, choices=["1", "2", "3", "4", "5"], default="3",
+      help="The priority of the script"+
+      "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY.")
 
-parser.add_argument("-b", "--begin-time", type=str,
-  help="Begin script after (b) seconds")
+    parser.add_argument("-e", "--email", type=str,
+      help="The email to send to when the script begins and ends.\n"+
+      "Can be defined as environment variable (export RHQ_EMAIL=<email>) to always send to that email." +
+      "This will prefer the email given in the argument line over the environtment variable")
 
-parser.add_argument("-t", "--titan", type=str,
-  help="Define the titans that the script can run on. Comma Seperated values")
+    parser.add_argument("-o", "--output-file", type=str, default="my.stdout",
+      help="The file for the output of the script")
 
-args = parser.parse_args()
+    parser.add_argument("-b", "--begin-time", type=str,
+      help="Begin script after (b) seconds")
 
-# base script at 0 as this is the "center" point
-processor.add_scriptline("srun -n1 ./{}".format(args.script), 0)
-processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
+    parser.add_argument("-t", "--titan", type=str,
+      help="Define the titans that the script can run on. Comma Seperated values")
+    args = parser.parse_args(sys.argv[2:])
+    print(args)
+    # # base script at 0 as this is the "center" point
+    # self.processor.add_scriptline("srun -n1 ./{}".format(args.script), 0)
+    # self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
 
-# base sbatch arguments
-processor.add_sbatchline("--priority", args.priority)
-processor.add_sbatchline("--ntasks", "1")
-output_file = args.output_file if args.output_file else "my.stdout"
-processor.add_sbatchline("-o", output_file)
+    # # base sbatch arguments
+    # self.processor.add_sbatchline("--priority", args.priority)
+    # self.processor.add_sbatchline("--ntasks", "1")
+    # output_file = args.output_file if args.output_file else "my.stdout"
+    # self.processor.add_sbatchline("-o", output_file)
 
-if args.begin_time:
-  processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
-  print(f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}")
+    # if args.begin_time:
+    #   self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
+    #   print(f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}")
 
-# Handle Email
-email = os.environ.get("RHQ_EMAIL", "")
-email = args.email if args.email else email
+    # # Handle Email
+    # email = os.environ.get("RHQ_EMAIL", "")
+    # email = args.email if args.email else email
 
-if email:
-  processor.add_scriptline("./send_email_start {}".format(email), -10)
-  processor.add_scriptline("./send_email_end {}".format(email), 2)
-  print(f"email: {email}")
+    # if email:
+    #   self.processor.add_scriptline("./send_email_start {}".format(email), -10)
+    #   self.processor.add_scriptline("./send_email_end {}".format(email), 2)
+    #   print(f"email: {email}")
+
+    #Handle venv
+    venv = os.environ.get("RHQ_VENV","")
+    venv = os.environ.get("VIRTUAL_ENV", venv)
+    venv = args.venv if args.venv else venv
+    # if venv:
+    #   self.processor.add_scriptline("source {}/bin/activate".format(venv), -1)
+    #   self.processor.add_scriptline("deactivate", 1)
+    #   print(f"venv: {venv}")
+
+    # if args.titan:
+    #   titans = args.titan.split(",") if "," in args.titan else args.titan
+    #   w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
+    #   self.processor.add_sbatchline("-w", w_string.format(",".join(titans)))
+    #   print(f"titans:{w_string.format(','.join(titans))}")
+
+    # self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
+
+    # self.processor.write_file()
+    # script = "sbatch ./{}".format(self.processor.script_name)
+    # subprocess.call(["chmod +x {}".format(args.script)], stdout=subprocess.PIPE, shell=True)
+    # subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
+    # subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+  def info(self):
+    print("info")
 
 
-#Handle venv
-venv = os.environ.get("RHQ_VENV","")
-venv = os.environ.get("VIRTUAL_ENV", venv)
-venv = args.venv if not venv else venv
-if venv:
-  processor.add_scriptline("source {}/bin/activate".format(venv), -1)
-  processor.add_scriptline("deactivate", 1)
-  print(f"venv: {venv}")
-
-if args.titan:
-  titans = args.titan.split(",") if "," in args.titan else args.titan
-  w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
-  processor.add_sbatchline("-w", w_string.format(",".join(titans)))
-  print(f"titans:{w_string.format(','.join(titans))}")
-
-processor.add_scriptline("chmod +x {}".format(args.script), -2)
-
-processor.write_file()
-script = "sbatch ./{}".format(processor.script_name)
-subprocess.call(["chmod +x {}".format(args.script)], stdout=subprocess.PIPE, shell=True)
-subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
-subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+if __name__ == "__main__":
+  RHQueueParser()
