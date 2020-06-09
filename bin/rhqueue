@@ -4,6 +4,7 @@ import subprocess
 import os
 import datetime
 import sys
+import getpass
 from rhqueue import *
 
 
@@ -25,34 +26,60 @@ class RHQueueParser(object):
     print("remove")
 
   def queue(self):
-    print("queue")
     parser = argparse.ArgumentParser(description="RHQueue")
-    parser.add_argument("script", metavar="script", type=str,
-      help="The script to run on a gpu\n"
-      + "at the top of each file there must be the shebang '#!/usr/bin/env python -u\n")
+    parser.add_argument(
+        "script",
+        metavar="script",
+        type=str,
+        help="The script to run on a gpu\n" +
+        "at the top of each file there must be the shebang '#!/usr/bin/env python -u\n"
+    )
 
-    parser.add_argument("-v", "--venv", metavar="venv", type=str,
-      help="The virtual environment used for the project")
+    parser.add_argument(
+        "-v",
+        "--venv",
+        metavar="venv",
+        type=str,
+        help="The virtual environment used for the project")
 
-    parser.add_argument("-p", "--priority",type=str, choices=["1", "2", "3", "4", "5"], default="3",
-      help="The priority of the script"+
-      "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY.")
+    parser.add_argument(
+        "-p",
+        "--priority",
+        type=str,
+        choices=["1", "2", "3", "4", "5"],
+        default="3",
+        help="The priority of the script" +
+        "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY."
+    )
 
-    parser.add_argument("-e", "--email", type=str,
-      help="The email to send to when the script begins and ends.\n"+
-      "Can be defined as environment variable (export RHQ_EMAIL=<email>) to always send to that email." +
-      "This will prefer the email given in the argument line over the environtment variable")
+    parser.add_argument(
+        "-e",
+        "--email",
+        type=str,
+        help="The email to send to when the script begins and ends.\n" +
+        "Can be defined as environment variable (export RHQ_EMAIL=<email>) to always send to that email."
+        +
+        "This will prefer the email given in the argument line over the environtment variable"
+    )
 
-    parser.add_argument("-o", "--output-file", type=str, default="my.stdout",
-      help="The file for the output of the script")
+    parser.add_argument(
+        "-o",
+        "--output-file",
+        type=str,
+        default="my.stdout",
+        help="The file for the output of the script")
 
-    parser.add_argument("-b", "--begin-time", type=str,
-      help="Begin script after (b) seconds")
+    parser.add_argument(
+        "-b", "--begin-time", type=str, help="Begin script after (b) seconds")
 
-    parser.add_argument("-t", "--titan", type=str,
-      help="Define the titans that the script can run on. Comma Seperated values")
+    parser.add_argument(
+        "-t",
+        "--titan",
+        type=str,
+        help="Define the titans that the script can run on. Comma Seperated values"
+    )
     args = parser.parse_args(sys.argv[2:])
-    print(args)
+
     # base script at 0 as this is the "center" point
     self.processor.add_scriptline("srun -n1 ./{}".format(args.script), 0)
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
@@ -65,7 +92,9 @@ class RHQueueParser(object):
 
     if args.begin_time:
       self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
-      print(f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}")
+      print(
+          f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}"
+      )
 
     # Handle Email
     email = os.environ.get("RHQ_EMAIL", "")
@@ -77,7 +106,7 @@ class RHQueueParser(object):
       print(f"email: {email}")
 
     #Handle venv
-    venv = os.environ.get("RHQ_VENV","")
+    venv = os.environ.get("RHQ_VENV", "")
     venv = os.environ.get("VIRTUAL_ENV", venv)
     venv = args.venv if args.venv else venv
     if venv:
@@ -95,11 +124,17 @@ class RHQueueParser(object):
 
     self.processor.write_file()
     script = "sbatch ./{}".format(self.processor.script_name)
-    subprocess.call(["chmod +x {}".format(args.script)], stdout=subprocess.PIPE, shell=True)
+    subprocess.call(["chmod +x {}".format(args.script)],
+                    stdout=subprocess.PIPE,
+                    shell=True)
     subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
     subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+
   def info(self):
-    print("info")
+    info = subprocess.Popen(["squeue"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    with open("./squeue", "a+") as f:
+      f.writelines(info.stdout.readlines())
+    print(getpass.getuser())
 
 
 if __name__ == "__main__":

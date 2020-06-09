@@ -43,7 +43,7 @@ class ScriptCreatorClass(object):
     if isinstance(val, SBatchLine):
       res_str = "{}={}" if "--" in val.arg_name else "{} {}"
       return res_str.format(val.arg_name, val.arg_value)
-    elif isinstance(val, ScriptLine):
+    else:
       return str(val.arg_value)
   
   def create_script(self):
