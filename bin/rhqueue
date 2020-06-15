@@ -29,7 +29,7 @@ class RHQueueParser(object):
     args = parser.parse_args(sys.argv[2:])
     queue = subprocess.Popen(["squeue"],
                              stdout=subprocess.PIPE).stdout.readlines()
-    data = DataGrid(str(queue))
+    data = DataGrid(queue)
 
     data.cancel_job(args.job)
 
@@ -160,7 +160,7 @@ class DataGrid(object):
       self.data.append(self._handle_line(line))
 
   def _handle_line(self, line):
-    print(line, type(line))
+    line = str(line)
     return [data for data in line[:-1].split(" ") if data]
 
   def get_info_about_user(self):
