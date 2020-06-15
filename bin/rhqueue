@@ -22,8 +22,16 @@ class RHQueueParser(object):
       exit(1)
     getattr(self, args.command)()
 
-  def remove(self):
-    print("remove")
+  def remove(self, info):
+    parser = argparse.ArgumentParser(description="RHQueue remover")
+    parser.add_argument(
+        "job", nargs=1, help="the job id of the job to cancel", type=int)
+    args = parser.parse_args(sys.argv[2:])
+    queue = subprocess.Popen(["squeue"],
+                             stdout=subprocess.PIPE).stdout.readlines()
+    data = DataGrid(queue)
+
+    data.cancel_job(args.job)
 
   def queue(self):
     parser = argparse.ArgumentParser(description="RHQueue")
@@ -150,7 +158,6 @@ class DataGrid(object):
     self.user = getpass.getuser()
     for line in output[1:]:
       self.data.append(self._handle_line(line))
-      
 
   def _handle_line(self, line):
     return [data for data in line[:-1].split(" ") if data]
@@ -170,7 +177,8 @@ class DataGrid(object):
 
   def is_user_job(self, job_id):
     for line in self.data:
-      if (line[3] == self.user or self.user in self.admin) and line[0] == job_id:
+      if (line[3] == self.user or
+          self.user in self.admin) and line[0] == job_id:
         return True
     return False
 
