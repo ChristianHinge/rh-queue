@@ -156,6 +156,7 @@ class DataGrid(object):
     self.headers = self._handle_line(output[0])
     self.data = []
     self.user = getpass.getuser()
+    print(self.user)
     for line in output[1:]:
       self.data.append(self._handle_line(line))
 
