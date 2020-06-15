@@ -162,7 +162,7 @@ class DataGrid(object):
 
   def _handle_line(self, line):
     line = line.decode()
-    return [data for data in line[:-1].split(" ") if data]
+    return DataGridLine([data for data in line[:-1].split(" ") if data])
 
   def get_info_about_user(self):
     ret = []
@@ -179,6 +179,7 @@ class DataGrid(object):
 
   def is_user_job(self, job_id):
     for line in self.data:
+      print(job_id, line[3])
       if (line[3] == self.user or
           self.user in self.admin) and line[0] == job_id:
         return True
@@ -193,6 +194,16 @@ class DataGrid(object):
     else:
       print("You do not have the permission to cancel that job")
 
+class DataGridLine(object):
+  def __init__(self, line) -> None:
+    self.id = line[0]
+    self.partition = line[1]
+    self.script = line[2]
+    self.user = line[3]
+    self.state = line[4]
+    self.time = line[5]
+    self.nodes = line[6]
+    self.nodelist = line[7]
 
 if __name__ == "__main__":
   RHQueueParser()
