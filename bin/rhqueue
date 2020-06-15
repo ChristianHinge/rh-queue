@@ -162,7 +162,7 @@ class DataGrid(object):
     print(self.data)
 
   def _handle_line(self, line):
-    line = str(line)
+    line = line.decode()
     print(line)
     return [data for data in line[:-1].split(" ") if data]
 
