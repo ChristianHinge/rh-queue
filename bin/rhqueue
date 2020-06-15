@@ -10,7 +10,7 @@ from rhqueue import *
 
 class RHQueueParser(object):
 
-  def __init__(self) -> None:
+  def __init__(self):
     self.processor = ScriptCreatorClass()
     parser = argparse.ArgumentParser(description="RHQueue")
     parser.add_argument(
@@ -22,7 +22,7 @@ class RHQueueParser(object):
       exit(1)
     getattr(self, args.command)()
 
-  def remove(self, info):
+  def remove(self):
     parser = argparse.ArgumentParser(description="RHQueue remover")
     parser.add_argument(
         "job", nargs=1, help="the job id of the job to cancel", type=int)
@@ -151,7 +151,7 @@ class RHQueueParser(object):
 
 class DataGrid(object):
 
-  def __init__(self, output) -> None:
+  def __init__(self, output):
     self.admin = ["pmcd"]
     self.headers = self._handle_line(output[0])
     self.data = []
