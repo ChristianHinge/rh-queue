@@ -156,14 +156,12 @@ class DataGrid(object):
     self.headers = self._handle_line(output[0])
     self.data = []
     self.user = getpass.getuser()
-    print(self.user)
     for line in output[1:]:
       self.data.append(self._handle_line(line))
     print(self.data)
 
   def _handle_line(self, line):
     line = line.decode()
-    print(line)
     return [data for data in line[:-1].split(" ") if data]
 
   def get_info_about_user(self):
@@ -187,6 +185,7 @@ class DataGrid(object):
     return False
 
   def cancel_job(self, job_id):
+    print(self.is_user_job(job_id), self.get_line_by_job_id(job_id))
     if self.is_user_job(job_id) and self.get_line_by_job_id(job_id) is not None:
       job_res_id = self.get_line_by_job_id(job_id)[0]
       # print("cancelled {}".format(job_res_id))
