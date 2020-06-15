@@ -25,13 +25,13 @@ class RHQueueParser(object):
   def remove(self):
     parser = argparse.ArgumentParser(description="RHQueue remover")
     parser.add_argument(
-        "job", nargs=1, help="the job id of the job to cancel", type=int)
+        "job", nargs=1, help="the job id of the job to cancel")
     args = parser.parse_args(sys.argv[2:])
     queue = subprocess.Popen(["squeue"],
                              stdout=subprocess.PIPE).stdout.readlines()
     data = DataGrid(queue)
 
-    data.cancel_job(args.job)
+    data.cancel_job(int(args.job))
 
   def queue(self):
     parser = argparse.ArgumentParser(description="RHQueue")
