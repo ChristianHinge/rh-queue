@@ -159,6 +159,7 @@ class DataGrid(object):
     print(self.user)
     for line in output[1:]:
       self.data.append(self._handle_line(line))
+    print(self.data)
 
   def _handle_line(self, line):
     line = str(line)
