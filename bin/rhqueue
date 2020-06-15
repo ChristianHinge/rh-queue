@@ -5,6 +5,7 @@ import os
 import datetime
 import sys
 import getpass
+from typing import List
 from rhqueue import *
 
 
@@ -154,7 +155,7 @@ class DataGrid(object):
   def __init__(self, output):
     self.admin = ["pmcd"]
     self.headers = self._handle_line(output[0])
-    self.data = []
+    self.data:List[DataGridLine] = []
     self.user = getpass.getuser()
     for line in output[1:]:
       self.data.append(self._handle_line(line))
@@ -173,7 +174,7 @@ class DataGrid(object):
 
   def get_line_by_job_id(self, job_id):
     for line in self.data:
-      if line[0] == job_id:
+      if line.id == job_id:
         return line
     return None
 
