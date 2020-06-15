@@ -163,6 +163,7 @@ class DataGrid(object):
 
   def _handle_line(self, line):
     line = str(line)
+    print(line)
     return [data for data in line[:-1].split(" ") if data]
 
   def get_info_about_user(self):
