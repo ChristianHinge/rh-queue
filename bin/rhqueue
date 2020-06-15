@@ -29,7 +29,7 @@ class RHQueueParser(object):
     args = parser.parse_args(sys.argv[2:])
     queue = subprocess.Popen(["squeue"],
                              stdout=subprocess.PIPE).stdout.readlines()
-    data = DataGrid(queue)
+    data = DataGrid(str(queue))
 
     data.cancel_job(args.job)
 
