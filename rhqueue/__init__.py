@@ -33,6 +33,7 @@ class ScriptCreatorClass(object):
     super().__init__()
     self.args = []
     self.sbatch_args = []
+    self.script_args = []
 
   def write_file(self):
     script = self.create_script()
@@ -58,4 +59,5 @@ class ScriptCreatorClass(object):
 
   def add_sbatchline(self, arg_name, arg_value):
     self.sbatch_args.append(SBatchLine(arg_name, arg_value))
+  
   

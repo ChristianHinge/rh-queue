@@ -31,8 +31,7 @@ class RHQueueParser(object):
     queue = subprocess.Popen(["squeue"],
                              stdout=subprocess.PIPE).stdout.readlines()
     data = DataGrid(queue)
-
-    data.cancel_job(args.job)
+    data.cancel_job(args.job[0])
 
   def queue(self):
     parser = argparse.ArgumentParser(description="RHQueue")
@@ -87,18 +86,30 @@ class RHQueueParser(object):
         type=str,
         help="Define the titans that the script can run on. Comma Seperated values"
     )
+    parser.add_argument(
+      "-a",
+      "--args",
+      help="the arguments for the script",
+      default=[],
+      nargs="+"
+    )
+    parser.add_argument(
+      "--test", 
+      help="script is a test",
+      action="store_true",
+      default=False
+    )
     args = parser.parse_args(sys.argv[2:])
 
     # base script at 0 as this is the "center" point
-    self.processor.add_scriptline("srun -n1 ./{}".format(args.script), 0)
+    self.processor.add_scriptline("srun -n1 ./{} {}".format(args.script, " ".join(args.args)), 0)
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
 
     # base sbatch arguments
     self.processor.add_sbatchline("--priority", args.priority)
     self.processor.add_sbatchline("--ntasks", "1")
     self.processor.add_sbatchline("--gres", "gpu:titan:1")
-    self.processor.add_sbatchline("-o", getattr(args, "output_file",
-                                                "my.stdout"))
+    self.processor.add_sbatchline("-o", args.output_file)
 
     if args.begin_time:
       self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
@@ -133,11 +144,14 @@ class RHQueueParser(object):
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.write_file()
     script = "sbatch ./{}".format(self.processor.script_name)
-    subprocess.call(["chmod +x {}".format(args.script)],
-                    stdout=subprocess.PIPE,
-                    shell=True)
-    subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
-    subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+    if args.test:
+      print(args)
+    else:
+      subprocess.call(["chmod +x {}".format(args.script)],
+                      stdout=subprocess.PIPE,
+                      shell=True)
+      subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
+      subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
 
   def info(self):
     info = subprocess.Popen(["squeue"],
@@ -158,17 +172,19 @@ class DataGrid(object):
     self.data:List[DataGridLine] = []
     self.user = getpass.getuser()
     for line in output[1:]:
-      self.data.append(self._handle_line(line))
-    print(self.data)
+      self.data.append(self._to_dataline(line))
 
   def _handle_line(self, line):
     line = line.decode()
-    return DataGridLine([data for data in line[:-1].split(" ") if data])
+    return [data for data in line[:-1].split(" ") if data]
+
+  def _to_dataline(self, line):
+    return DataGridLine(self._handle_line(line))
 
   def get_info_about_user(self):
     ret = []
     for line in self.data:
-      if line[3] == self.user:
+      if line.user == self.user:
         ret.append(line)
     return ret
 
@@ -180,24 +196,21 @@ class DataGrid(object):
 
   def is_user_job(self, job_id):
     for line in self.data:
-      print(job_id, line[3])
-      if (line[3] == self.user or
-          self.user in self.admin) and line[0] == job_id:
+      if (line.user == self.user or
+          self.user in self.admin) and line.id == job_id:
         return True
     return False
 
   def cancel_job(self, job_id):
-    print(self.is_user_job(job_id), self.get_line_by_job_id(job_id))
     if self.is_user_job(job_id) and self.get_line_by_job_id(job_id) is not None:
-      job_res_id = self.get_line_by_job_id(job_id)[0]
-      # print("cancelled {}".format(job_res_id))
-      subprocess.call(["scancel {}".format(job_id[0])])
+      job_res_id = self.get_line_by_job_id(job_id).id
+      subprocess.call(["scancel {}".format(job_id)], shell=True)
     else:
       print("You do not have the permission to cancel that job")
 
 class DataGridLine(object):
   def __init__(self, line) -> None:
-    self.id = line[0]
+    self.id = int(line[0])
     self.partition = line[1]
     self.script = line[2]
     self.user = line[3]
