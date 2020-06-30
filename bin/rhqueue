@@ -15,7 +15,7 @@ class RHQueueParser(object):
     self.processor = ScriptCreatorClass()
     parser = argparse.ArgumentParser(description="RHQueue")
     parser.add_argument(
-        "command", help="The subcommand to run options are queue,remove,info")
+        "command", help="The subcommand to run options are {queue,remove,info}")
     args = parser.parse_args(sys.argv[1:2])
     if not hasattr(self, args.command):
       print("not found")
@@ -221,6 +221,3 @@ class DataGridLine(object):
 
 if __name__ == "__main__":
   RHQueueParser()
-  # data = DataGrid(open("./squeue", "r").readlines())
-  # data.get_info_about_user()
-  # data.cancel_job("285")

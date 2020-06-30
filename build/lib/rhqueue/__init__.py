@@ -33,13 +33,14 @@ class ScriptCreatorClass(object):
     super().__init__()
     self.args = []
     self.sbatch_args = []
+    self.script_args = []
 
   def write_file(self):
     script = self.create_script()
     with open(self.script_name, "w+") as file:
       file.write(script)
 
-  def _create_line(self, val:ScriptLine) -> str:
+  def _create_line(self, val:ScriptLine):
     if isinstance(val, SBatchLine):
       res_str = "{}={}" if "--" in val.arg_name else "{} {}"
       return res_str.format(val.arg_name, val.arg_value)
@@ -59,4 +60,4 @@ class ScriptCreatorClass(object):
   def add_sbatchline(self, arg_name, arg_value):
     self.sbatch_args.append(SBatchLine(arg_name, arg_value))
   
-
+  

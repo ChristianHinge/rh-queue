@@ -1,3 +1,0 @@
-chmod: cannot access 'test_tensorflow.py': No such file or directory
-srun: error: titan1: task 0: Exited with exit code 2
-slurmstepd-titan1: error: execve(): /homes/pmcd/rh-queue/bin/./test_tensorflow.py: No such file or directory

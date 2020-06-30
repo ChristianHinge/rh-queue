@@ -1,101 +1,226 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import argparse
 import subprocess
 import os
+import datetime
+import sys
+import getpass
+from typing import List
 from rhqueue import *
 
-def run_process(proc):
-  res = subprocess.call([proc], 
-    stdout=subprocess.PIPE,
-    stdin=subprocess.PIPE,
-    stderr=subprocess.PIPE, 
-    shell=True).stdout
-  res = res[:-1].decode()
-  return res
+
+class RHQueueParser(object):
+
+  def __init__(self):
+    self.processor = ScriptCreatorClass()
+    parser = argparse.ArgumentParser(description="RHQueue")
+    parser.add_argument(
+        "command", help="The subcommand to run options are queue,remove,info")
+    args = parser.parse_args(sys.argv[1:2])
+    if not hasattr(self, args.command):
+      print("not found")
+      parser.print_help()
+      exit(1)
+    getattr(self, args.command)()
+
+  def remove(self):
+    parser = argparse.ArgumentParser(description="RHQueue remover")
+    parser.add_argument(
+        "job", nargs=1, help="the job id of the job to cancel", type=int)
+    args = parser.parse_args(sys.argv[2:])
+    queue = subprocess.Popen(["squeue"],
+                             stdout=subprocess.PIPE).stdout.readlines()
+    data = DataGrid(queue)
+    data.cancel_job(args.job[0])
+
+  def queue(self):
+    parser = argparse.ArgumentParser(description="RHQueue")
+    parser.add_argument(
+        "script",
+        metavar="script",
+        type=str,
+        help="The script to run on a gpu\n" +
+        "at the top of each file there must be the shebang '#!/usr/bin/env python -u\n"
+    )
+
+    parser.add_argument(
+        "-v",
+        "--venv",
+        metavar="venv",
+        type=str,
+        help="The virtual environment used for the project")
+
+    parser.add_argument(
+        "-p",
+        "--priority",
+        type=str,
+        choices=["1", "2", "3", "4", "5"],
+        default="3",
+        help="The priority of the script" +
+        "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY."
+    )
+
+    parser.add_argument(
+        "-e",
+        "--email",
+        type=str,
+        help="The email to send to when the script begins and ends.\n" +
+        "Can be defined as environment variable (export RHQ_EMAIL=<email>) to always send to that email."
+        +
+        "This will prefer the email given in the argument line over the environtment variable"
+    )
+
+    parser.add_argument(
+        "-o",
+        "--output-file",
+        type=str,
+        default="my.stdout",
+        help="The file for the output of the script")
+
+    parser.add_argument(
+        "-b", "--begin-time", type=str, help="Begin script after (b) seconds")
+
+    parser.add_argument(
+        "-t",
+        "--titan",
+        type=str,
+        help="Define the titans that the script can run on. Comma Seperated values"
+    )
+    parser.add_argument(
+      "-a",
+      "--args",
+      help="the arguments for the script",
+      default=[],
+      nargs="+"
+    )
+    parser.add_argument(
+      "--test", 
+      help="script is a test",
+      action="store_true",
+      default=False
+    )
+    args = parser.parse_args(sys.argv[2:])
+
+    # base script at 0 as this is the "center" point
+    self.processor.add_scriptline("srun -n1 ./{} {}".format(args.script, " ".join(args.args)), 0)
+    self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
+
+    # base sbatch arguments
+    self.processor.add_sbatchline("--priority", args.priority)
+    self.processor.add_sbatchline("--ntasks", "1")
+    self.processor.add_sbatchline("--gres", "gpu:titan:1")
+    self.processor.add_sbatchline("-o", args.output_file)
+
+    if args.begin_time:
+      self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
+      print(
+          f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}"
+      )
+
+    # Handle Email
+    email = os.environ.get("RHQ_EMAIL", "")
+    email = args.email if args.email else email
+
+    if email:
+      self.processor.add_scriptline("./send_email_start {}".format(email), -10)
+      self.processor.add_scriptline("./send_email_end {}".format(email), 2)
+      print(f"email: {email}")
+
+    #Handle venv
+    venv = os.environ.get("RHQ_VENV", "")
+    venv = os.environ.get("VIRTUAL_ENV", venv)
+    venv = args.venv if args.venv else venv
+    if venv:
+      self.processor.add_scriptline("source {}/bin/activate".format(venv), -1)
+      self.processor.add_scriptline("deactivate", 1)
+      print(f"venv: {venv}")
+
+    if args.titan:
+      titans = args.titan.split(",") if "," in args.titan else args.titan
+      w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
+      self.processor.add_sbatchline("-w", w_string.format(",".join(titans)))
+      print(f"titans:{w_string.format(','.join(titans))}")
+
+    self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
+    self.processor.write_file()
+    script = "sbatch ./{}".format(self.processor.script_name)
+    if args.test:
+      print(args)
+    else:
+      subprocess.call(["chmod +x {}".format(args.script)],
+                      stdout=subprocess.PIPE,
+                      shell=True)
+      subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
+      subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+
+  def info(self):
+    info = subprocess.Popen(["squeue"],
+                            stdout=subprocess.PIPE,
+                            stdin=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            shell=True)
+    with open("./squeue", "a+") as f:
+      f.write(b"".join(info.stdout.readlines()).decode("utf-8"))
+    print(getpass.getuser())
 
 
-processor = ScriptCreatorClass()
-parser = argparse.ArgumentParser(description="RHQueue")
+class DataGrid(object):
 
-parser.add_argument("script", metavar="script", type=str, 
-  help="The script to run on a gpu\n"
-  + "at the top of each file there must be the shebang '#!/usr/bin/env python -u\n")
+  def __init__(self, output):
+    self.admin = ["pmcd"]
+    self.headers = self._handle_line(output[0])
+    self.data:List[DataGridLine] = []
+    self.user = getpass.getuser()
+    for line in output[1:]:
+      self.data.append(self._to_dataline(line))
 
-parser.add_argument("-v", "--venv", metavar="venv", type=str,
-  help="The virtual environment used for the project")
+  def _handle_line(self, line):
+    line = line.decode()
+    return [data for data in line[:-1].split(" ") if data]
 
-parser.add_argument("-p", "--priority",type=str, choices=["1", "2", "3", "4", "5"], default="3",
-  help="The priority of the script"+
-  "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY.")
+  def _to_dataline(self, line):
+    return DataGridLine(self._handle_line(line))
 
-parser.add_argument("-e", "--email", type=str,
-  help="The email to send to when the script begins and ends.\n"+
-  "Can be defined as environment variable (export RHQ_EMAIL=<email>) to always send to that email." +
-  "This will prefer the email given in the argument line over the environtment variable")
+  def get_info_about_user(self):
+    ret = []
+    for line in self.data:
+      if line.user == self.user:
+        ret.append(line)
+    return ret
 
-parser.add_argument("-o", "--output-file", type=str, default="my.stdout",
-  help="The file for the output of the script")
+  def get_line_by_job_id(self, job_id):
+    for line in self.data:
+      if line.id == job_id:
+        return line
+    return None
 
-parser.add_argument("-b", "--begin-time", type=str,
-  help="Begin script after (b) seconds")
+  def is_user_job(self, job_id):
+    for line in self.data:
+      if (line.user == self.user or
+          self.user in self.admin) and line.id == job_id:
+        return True
+    return False
 
-parser.add_argument("-t", "--titan", nargs="+", type=str,
-  help="Define the titans that the script can run on")
+  def cancel_job(self, job_id):
+    if self.is_user_job(job_id) and self.get_line_by_job_id(job_id) is not None:
+      job_res_id = self.get_line_by_job_id(job_id).id
+      subprocess.call(["scancel {}".format(job_id)], shell=True)
+    else:
+      print("You do not have the permission to cancel that job")
 
-args = parser.parse_args()
+class DataGridLine(object):
+  def __init__(self, line) -> None:
+    self.id = int(line[0])
+    self.partition = line[1]
+    self.script = line[2]
+    self.user = line[3]
+    self.state = line[4]
+    self.time = line[5]
+    self.nodes = line[6]
+    self.nodelist = line[7]
 
-# base script at 0 as this is the "center" point
-processor.add_scriptline("srun -n1 -l ./{}".format(args.script), 0)
-processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
-
-# base sbatch arguments
-processor.add_sbatchline("--priority", args.priority)
-processor.add_sbatchline("--ntasks", "1")
-processor.add_sbatchline("-o", args.output_file)
-
-if args.begin_time:
-  processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
-
-# Handle Email
-email = ""
-try:
-  email = os.environ["RHQ_EMAIL"]
-except:
-  pass
-email = args.email if args.email else email
-
-if email:
-  processor.add_scriptline("./send_email_start {}".format(email), -10)
-  processor.add_scriptline("./send_email_end {}".format(email), 2)
-
-venv = ""
-try:
-  venv = os.environ["RHQ_VENV"]
-except:
-  pass
-try:
-  venv = os.environ["VIRTUAL_ENV"] if os.environ["VIRTUAL_ENV"] else venv
-except:
-  pass
-venv = args.venv if not venv else venv
-
-
-if venv:
-  processor.add_scriptline("source {}/bin/activate".format(venv), -1)
-  processor.add_scriptline("deactivate", 1)
-
-if args.titan:
-  print(args.titan)
-  titans = args.titan.split(",") if "," in args.titan else args.titan
-  w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
-  processor.add_sbatchline("-w", w_string.format(",".join(titans)))
-  #processor.add_sbatchline("-m", "arbitrary")
-  #processor.add_sbatchline("--nodes", "1-1")
-print(venv)
-processor.add_scriptline("chmod +x {}".format(args.script), -2)
-
-processor.write_file()
-script = "sbatch ./{}".format(processor.script_name)
-subprocess.call(["chmod +x {}".format(args.script)], stdout=subprocess.PIPE, shell=True)
-subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
-subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+if __name__ == "__main__":
+  RHQueueParser()
+  # data = DataGrid(open("./squeue", "r").readlines())
+  # data.get_info_about_user()
+  # data.cancel_job("285")
