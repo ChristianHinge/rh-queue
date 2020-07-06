@@ -13,44 +13,44 @@ class RHQueueParser(object):
 
   def __init__(self):
     self.processor = ScriptCreatorClass()
-    parser = argparse.ArgumentParser(description="RHQueue")
-    parser.add_argument(
-        "command", help="The subcommand to run options are {queue,remove,info}")
-    args = parser.parse_args(sys.argv[1:2])
-    if not hasattr(self, args.command):
-      print("not found")
-      parser.print_help()
-      exit(1)
-    getattr(self, args.command)()
 
-  def remove(self):
-    parser = argparse.ArgumentParser(description="RHQueue remover")
-    parser.add_argument(
-        "job", nargs=1, help="the job id of the job to cancel", type=int)
-    args = parser.parse_args(sys.argv[2:])
-    queue = subprocess.Popen(["squeue"],
-                             stdout=subprocess.PIPE).stdout.readlines()
-    data = DataGrid(queue)
-    data.cancel_job(args.job[0])
-
-  def queue(self):
+    # Main Parser
     parser = argparse.ArgumentParser(description="RHQueue")
-    parser.add_argument(
+    subparsers = parser.add_subparsers(
+      help="The subcommand to run options are {queue,remove,info}",
+      dest="command"
+      )
+    
+    # Queue Parser
+    parser_queue = subparsers.add_parser("queue", help="Used to queue scripts")
+    group = parser_queue.add_mutually_exclusive_group()
+    parser_queue.add_argument(
         "script",
         metavar="script",
         type=str,
         help="The script to run on a gpu\n" +
         "at the top of each file there must be the shebang '#!/usr/bin/env python -u\n"
     )
-
-    parser.add_argument(
+    # venv defaults
+    venv = os.environ.get("RHQ_VENV", "")
+    venv = os.environ.get("VIRTUAL_ENV", venv)
+    group.add_argument(
         "-v",
         "--venv",
         metavar="venv",
         type=str,
-        help="The virtual environment used for the project")
-
-    parser.add_argument(
+        help="The virtual environment used for the project",
+        default=venv
+    )
+    group.add_argument(
+      "-c",
+      "--conda-venv",
+      metavar="condaVenv",
+      type=str,
+      help="The environment for conda",
+      default=os.environ.get("RHQ_CONDA_VENV", "")
+    )
+    parser_queue.add_argument(
         "-p",
         "--priority",
         type=str,
@@ -60,47 +60,66 @@ class RHQueueParser(object):
         "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY."
     )
 
-    parser.add_argument(
+    parser_queue.add_argument(
         "-e",
         "--email",
         type=str,
         help="The email to send to when the script begins and ends.\n" +
         "Can be defined as environment variable (export RHQ_EMAIL=<email>) to always send to that email."
         +
-        "This will prefer the email given in the argument line over the environtment variable"
+        "This will prefer the email given in the argument line over the environtment variable",
+        default=os.environ.get("RHQ_EMAIL", "")
     )
 
-    parser.add_argument(
+    parser_queue.add_argument(
         "-o",
         "--output-file",
         type=str,
         default="my.stdout",
-        help="The file for the output of the script")
-
-    parser.add_argument(
+        help="The file for the output of the script"
+    )
+    parser_queue.add_argument(
         "-b", "--begin-time", type=str, help="Begin script after (b) seconds")
 
-    parser.add_argument(
+    parser_queue.add_argument(
         "-t",
         "--titan",
         type=str,
         help="Define the titans that the script can run on. Comma Seperated values"
     )
-    parser.add_argument(
+    parser_queue.add_argument(
       "-a",
       "--args",
       help="the arguments for the script",
       default=[],
       nargs="+"
     )
-    parser.add_argument(
+    parser_queue.add_argument(
       "--test", 
       help="script is a test",
       action="store_true",
       default=False
     )
-    args = parser.parse_args(sys.argv[2:])
 
+    # Remove Subparser
+    parser_remove = subparsers.add_parser("remove", help="remove help")
+    parser_remove.add_argument(
+        "job", nargs=1, help="the job id of the job to cancel", type=int)
+
+    args = parser.parse_args()
+    if not hasattr(self, args.command):
+      print("not found")
+      parser.print_help()
+      exit(1)
+    getattr(self, args.command)(args)
+
+  def remove(self, args):
+    queue = subprocess.Popen(["squeue"],
+                             stdout=subprocess.PIPE).stdout.readlines()
+    data = DataGrid(queue)
+    data.cancel_job(args.job[0])
+
+  def queue(self, args):
     # base script at 0 as this is the "center" point
     self.processor.add_scriptline("srun -n1 ./{} {}".format(args.script, " ".join(args.args)), 0)
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
@@ -113,33 +132,32 @@ class RHQueueParser(object):
 
     if args.begin_time:
       self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
-      print(
-          f"begin time approx: {datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time))}"
-      )
+      # print(
+      #     "begin time approx: {}".format(datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time)))
+      # )
 
     # Handle Email
-    email = os.environ.get("RHQ_EMAIL", "")
-    email = args.email if args.email else email
-
-    if email:
-      self.processor.add_scriptline("./send_email_start {}".format(email), -10)
-      self.processor.add_scriptline("./send_email_end {}".format(email), 2)
-      print(f"email: {email}")
+    if args.email:
+      self.processor.add_scriptline("./send_email_start {}".format(args.email), -10)
+      self.processor.add_scriptline("./send_email_end {}".format(args.email), 2)
+      # print("email: {}".format(args.email))
 
     #Handle venv
-    venv = os.environ.get("RHQ_VENV", "")
-    venv = os.environ.get("VIRTUAL_ENV", venv)
-    venv = args.venv if args.venv else venv
-    if venv:
-      self.processor.add_scriptline("source {}/bin/activate".format(venv), -1)
+    if args.venv:
+      self.processor.add_scriptline("source {}/bin/activate".format(args.venv), -1)
       self.processor.add_scriptline("deactivate", 1)
-      print(f"venv: {venv}")
-
+      # print("venv: {}".format(args.venv))
+    
+    if args.conda_venv:
+      self.processor.add_scriptline("conda activate {}".format(args.conda_venv), -1)
+      self.processor.add_scriptline("conda deactivate", 1)
+      # print("conda_venv:{}".format(args.conda_venv))
+    
     if args.titan:
       titans = args.titan.split(",") if "," in args.titan else args.titan
       w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
       self.processor.add_sbatchline("-w", w_string.format(",".join(titans)))
-      print(f"titans:{w_string.format(','.join(titans))}")
+      # print("titans:{}".format(w_string.format(','.join(titans))))
 
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.write_file()
@@ -153,7 +171,7 @@ class RHQueueParser(object):
       subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
       subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
 
-  def info(self):
+  def info(self, args):
     info = subprocess.Popen(["squeue"],
                             stdout=subprocess.PIPE,
                             stdin=subprocess.PIPE,
@@ -164,49 +182,7 @@ class RHQueueParser(object):
     print(getpass.getuser())
 
 
-class DataGrid(object):
 
-  def __init__(self, output):
-    self.admin = ["pmcd"]
-    self.headers = self._handle_line(output[0])
-    self.data:List[DataGridLine] = []
-    self.user = getpass.getuser()
-    for line in output[1:]:
-      self.data.append(self._to_dataline(line))
-
-  def _handle_line(self, line):
-    line = line.decode()
-    return [data for data in line[:-1].split(" ") if data]
-
-  def _to_dataline(self, line):
-    return DataGridLine(self._handle_line(line))
-
-  def get_info_about_user(self):
-    ret = []
-    for line in self.data:
-      if line.user == self.user:
-        ret.append(line)
-    return ret
-
-  def get_line_by_job_id(self, job_id):
-    for line in self.data:
-      if line.id == job_id:
-        return line
-    return None
-
-  def is_user_job(self, job_id):
-    for line in self.data:
-      if (line.user == self.user or
-          self.user in self.admin) and line.id == job_id:
-        return True
-    return False
-
-  def cancel_job(self, job_id):
-    if self.is_user_job(job_id) and self.get_line_by_job_id(job_id) is not None:
-      job_res_id = self.get_line_by_job_id(job_id).id
-      subprocess.call(["scancel {}".format(job_id)], shell=True)
-    else:
-      print("You do not have the permission to cancel that job")
 
 class DataGridLine(object):
   def __init__(self, line) -> None:

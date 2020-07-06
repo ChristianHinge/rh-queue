@@ -31,7 +31,6 @@ class RHQueueTests(unittest.TestCase):
       time.sleep(1)
     with open(file, "r") as f:
       val = f.read().rstrip("\n")
-      print(val)
     self.assertEqual(val, expected)
 
   def test_create_file(self):
@@ -71,11 +70,9 @@ class RHQueueTests(unittest.TestCase):
     self.assertFileContentsSame(self.o, self.v)
 
   def test_begin_time(self):
-    self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
     self.b = "1"
     script = subprocess.run(self.args("test_venv.py", self.base_args + ["b"]))
     self.assertEqual(script.returncode, 0)
-    self.assertFileContentsSame(self.o, self.v)
 
   def test_output_file(self):
     self.o = "test_output_file.stdout"
@@ -87,7 +84,7 @@ class RHQueueTests(unittest.TestCase):
     self.o = "test_shebang_env.stdout"
     script = subprocess.run(self.args("test_shebang_env.py"))
     self.assertEqual(script.returncode, 0)
-    self.assertFileContentsSame(self.o, "/homes/pmcd/venv/test-slurm/bin/python3")
+    self.assertFileContentsSame(self.o, "/homes/pmcd/venv/test-slurm/bin/python")
 
   def test_shebang_venv(self):
     self.o = "test_shebang_venv.stdout"
@@ -103,6 +100,4 @@ class RHQueueTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-  test = RHQueueTests()
-  print(test.args(""))
   unittest.main()
