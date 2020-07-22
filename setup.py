@@ -1,10 +1,11 @@
-from distutils.core import setup
-
+from setuptools import setup, find_packages
 setup(name="rh-queue",
-        version="0.3",
+        version="0.4",
         description="rh queue system for queueing scripts",
         author="Peter McDaniel",
         author_email="peter.nicolas.castenschiold.mcdaniel@regionh.dk",
-       scripts=["bin/rhqueue"],
-       packages=["rhqueue"]
+       scripts=["bin/rhqueue", "bin/rhqemail"],
+       packages=find_packages(),
+       data_files=[("emails", ["emails/config.ini"])],
+       include_package_data=True
        )

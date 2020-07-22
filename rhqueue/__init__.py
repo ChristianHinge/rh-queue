@@ -46,7 +46,7 @@ class ScriptCreatorClass(object):
       return res_str.format(val.arg_name, val.arg_value)
     else:
       return str(val.arg_value)
-  
+
   def create_script(self):
     self.args.sort()
     self.sbatch_args.sort()

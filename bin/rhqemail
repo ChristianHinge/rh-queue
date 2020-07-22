@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+from emails import *
+import argparse
+import sys
+class EmailParser(object):
+  def __init__(self):
+    parser = argparse.ArgumentParser("RHQueue Email Sender")
+    parser.add_argument(
+      "type", choices=["start", "completed", "failed"], help="The content of the email to send"
+    )
+    parser.add_argument(
+      "email", help="email to send to"
+    )
+    parser.add_argument(
+      "script", help="The script the email is about"
+    )
+    args = parser.parse_args()
+    EmailSender(args.email, args.type, args.script).send_email()
+
+if __name__ == "__main__":
+  EmailParser()

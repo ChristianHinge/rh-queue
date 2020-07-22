@@ -1,9 +1,11 @@
-#!/homes/pmcd/venv/test-slurm/bin/python3
+#!/usr/bin/env python3
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 print(tf.config.experimental.list_physical_devices())
-print(tf.test.is_gpu_available())
+print(f"{tf.test.is_gpu_available()}")
+print(tf.config.experimental.list_physical_devices('GPU'))
+print(tf.test.is_built_with_cuda())
 inputs = keras.Input(shape=(784,), name='digits')
 x = layers.Dense(64, activation='relu', name='dense_1')(inputs)
 x = layers.Dense(64, activation='relu', name='dense_2')(x)
@@ -27,7 +29,7 @@ model.compile(optimizer=keras.optimizers.RMSprop(),  # Optimizer
                 metrics=['sparse_categorical_accuracy'])
 history = model.fit(x_train, y_train,
                         batch_size=64,
-                        epochs=3,
+                        epochs=6,
                         # We pass some validation for
                         # monitoring validation loss and metrics
                         # at the end of each epoch

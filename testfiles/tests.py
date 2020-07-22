@@ -5,11 +5,11 @@ import copy
 import inspect
 import time
 import glob
-
+from pathlib import Path
 
 class RHQueueTests(unittest.TestCase):
   v = "/homes/pmcd/venv/test-slurm"
-  t = "1"
+  t = "1,2,3"
   o = "my.stdout"
   p = "3"
   e = "peter.nicolas.castenschiold.mcdaniel@regionh.dk"
@@ -27,10 +27,18 @@ class RHQueueTests(unittest.TestCase):
 
   def assertFileContentsSame(self, file, expected):
     val = ""
-    while not os.path.isfile(file):
+    counter = 0
+    while not os.path.exists(file):
       time.sleep(1)
-    with open(file, "r") as f:
-      val = f.read().rstrip("\n")
+    while Path(file).stat().st_size <= 0:
+      time.sleep(1)
+      if counter > 17 : break
+      counter += 1
+    if os.path.isfile(file):  
+      with open(file, "r") as f:
+        val = f.read().rstrip("\n")
+    else:
+      raise Exception(f"file {file} is hanging indefinitly")
     self.assertEqual(val, expected)
 
   def test_create_file(self):
@@ -39,11 +47,6 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile("./new_file.txt"))
     self.assertFileContentsSame("./new_file.txt", "new file is created")
-
-  def test_tensorflow(self):
-    self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
-    script = subprocess.run(self.args("test_tensorflow.py"))
-    self.assertEqual(script.returncode, 0)
 
   def test_without_venv(self):
     val = copy.copy(self.base_args)
@@ -78,7 +81,7 @@ class RHQueueTests(unittest.TestCase):
     self.o = "test_output_file.stdout"
     script = subprocess.run(self.args("test_venv.py"))
     self.assertEqual(script.returncode, 0)
-    self.assertTrue(os.path.isfile(self.o))
+    self.assertFileContentsSame(self.o, "/homes/pmcd/venv/test-slurm")
 
   def test_shebang_env(self):
     self.o = "test_shebang_env.stdout"
@@ -98,6 +101,23 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertFileContentsSame(self.o, "/usr/bin/python3")
 
+  def test_multiple_titans(self):
+    self.o = "test_multiple_titans.stdout"
+    for i in [1,2,3,4,7]:
+      with self.subTest(titan = i):
+        self._sub_titan_test(titan=i)
+
+  def _sub_titan_test(self, titan):
+    self.o = f"test_multiple_titans{titan}.stdout"
+    self.t = str(titan)
+    script = subprocess.run(self.args("test_titan_hostname.py"))
+    self.assertEqual(script.returncode, 0)
+    self.assertFileContentsSame(self.o, f"titan{titan}")
+  
+  def test_tensorflow(self):
+    self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
+    script = subprocess.run(self.args("test_tensorflow.py"))
+    self.assertEqual(script.returncode, 0)
 
 if __name__ == "__main__":
   unittest.main()

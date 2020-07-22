@@ -1,3 +1,4 @@
 *.stdout
 testfiles\new_file.txt
 build/*
+*config*

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import argparse
 import subprocess
 import os
@@ -54,7 +54,7 @@ class RHQueueParser(object):
         "-p",
         "--priority",
         type=str,
-        choices=["1", "2", "3", "4", "5"],
+        choices=["1", "2", "3", "4""config.ini", "5"],
         default="3",
         help="The priority of the script" +
         "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY."
@@ -111,6 +111,7 @@ class RHQueueParser(object):
       print("not found")
       parser.print_help()
       exit(1)
+    
     getattr(self, args.command)(args)
 
   def remove(self, args):
@@ -120,8 +121,7 @@ class RHQueueParser(object):
     data.cancel_job(args.job[0])
 
   def queue(self, args):
-    # base script at 0 as this is the "center" point
-    self.processor.add_scriptline("srun -n1 ./{} {}".format(args.script, " ".join(args.args)), 0)
+    self.processor.add_scriptline("srun -n1 -l {}".format(args.script), 0)
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
 
     # base sbatch arguments
@@ -138,9 +138,14 @@ class RHQueueParser(object):
 
     # Handle Email
     if args.email:
-      self.processor.add_scriptline("./send_email_start {}".format(args.email), -10)
-      self.processor.add_scriptline("./send_email_end {}".format(args.email), 2)
-      # print("email: {}".format(args.email))
+      self.processor.add_scriptline("rhqemail start {} {}".format(args.email, args.script), -10)
+      self.processor.add_scriptline(
+      """if [$? -eq 0]; then
+        rhqemail completed {0} {1} 
+      else
+        rhqemail failed {0} {1}
+      fi
+      """.format(args.email, args.script ), 2)
 
     #Handle venv
     if args.venv:
@@ -168,8 +173,9 @@ class RHQueueParser(object):
       subprocess.call(["chmod +x {}".format(args.script)],
                       stdout=subprocess.PIPE,
                       shell=True)
-      subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
+      res = subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
       subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+      exit(res)
 
   def info(self, args):
     info = subprocess.Popen(["squeue"],
@@ -194,6 +200,9 @@ class DataGridLine(object):
     self.time = line[5]
     self.nodes = line[6]
     self.nodelist = line[7]
+
+
+
 
 if __name__ == "__main__":
   RHQueueParser()
