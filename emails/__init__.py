@@ -30,11 +30,8 @@ class EmailSender(object):
     self.email["From"] = self.email_from
     context = ssl.create_default_context()
     try:
-      with smtplib.SMTP("smtp.office365.com", 587) as server:
+      with smtplib.SMTP("10.140.209.2", 25) as server:
         server.ehlo()
-        server.starttls(context=context)
-        server.ehlo()
-        server.login(self.email_from, self.password)
         server.sendmail(self.email_from, self.email_to, self.email.as_string())
     except Exception as e:
       print(e)
