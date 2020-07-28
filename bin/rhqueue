@@ -10,7 +10,8 @@ from rhqueue import *
 
 
 class RHQueueParser(object):
-
+  compute_node_basename = "titan"
+  titans = get_titans()
   def __init__(self):
     self.processor = ScriptCreatorClass()
 
@@ -28,8 +29,11 @@ class RHQueueParser(object):
         "script",
         metavar="script",
         type=str,
-        help="The script to run on a gpu\n" +
-        "at the top of each file there must be the shebang '#!/usr/bin/env python -u\n"
+        help="""
+          The script to run on a gpu.
+          At the top of each file there must be the shebang '#!/usr/bin/env <python_version>'
+          Where <python_version> is the version of python needed, python(for 2.7) or python3
+        """
     )
     # venv defaults
     venv = os.environ.get("RHQ_VENV", "")
@@ -39,7 +43,10 @@ class RHQueueParser(object):
         "--venv",
         metavar="venv",
         type=str,
-        help="The virtual environment used for the project",
+        help="""
+          The virtual environment used for the project. 
+          The value is the absolute path to the virtual environment directoy
+        """,
         default=venv
     )
     group.add_argument(
@@ -47,14 +54,17 @@ class RHQueueParser(object):
       "--conda-venv",
       metavar="condaVenv",
       type=str,
-      help="The environment for conda",
+      help="""
+        The environment for conda. 
+        This is supposed to be the name of the conda environment.
+      """,
       default=os.environ.get("RHQ_CONDA_VENV", "")
     )
     parser_queue.add_argument(
         "-p",
         "--priority",
         type=str,
-        choices=["1", "2", "3", "4""config.ini", "5"],
+        choices=["1", "2", "3", "4", "5"],
         default="3",
         help="The priority of the script" +
         "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY."
@@ -64,10 +74,11 @@ class RHQueueParser(object):
         "-e",
         "--email",
         type=str,
-        help="The email to send to when the script begins and ends.\n" +
-        "Can be defined as environment variable (export RHQ_EMAIL=<email>) to always send to that email."
-        +
-        "This will prefer the email given in the argument line over the environtment variable",
+        help="""
+          The email to send to when the script begins and ends.
+          Can be defined as environment variable (export RHQ_EMAIL=<email>) to use as a default.
+          This will prefer the email given in the argument line over the environtment variable
+        """,
         default=os.environ.get("RHQ_EMAIL", "")
     )
 
@@ -76,7 +87,11 @@ class RHQueueParser(object):
         "--output-file",
         type=str,
         default="my.stdout",
-        help="The file for the output of the script"
+        help="""
+          The file for the output of the script.
+          This is the path to the file.
+          Default is 'my.stdout'
+        """
     )
     parser_queue.add_argument(
         "-b", "--begin-time", type=str, help="Begin script after (b) seconds")
@@ -85,18 +100,24 @@ class RHQueueParser(object):
         "-t",
         "--titan",
         type=str,
-        help="Define the titans that the script can run on. Comma Seperated values"
+        help="Define the titans that the script can run on. Comma Seperated values",
+        default=[],
+        nargs='+'
     )
     parser_queue.add_argument(
       "-a",
       "--args",
-      help="the arguments for the script",
+      help="""
+        The arguments for the script. 
+        These are passed to the script to run.
+        Pass these in the same method as you would normally
+      """,
       default=[],
       nargs="+"
     )
     parser_queue.add_argument(
       "--test", 
-      help="script is a test",
+      help="script is a test. Ignore this",
       action="store_true",
       default=False
     )
@@ -105,7 +126,7 @@ class RHQueueParser(object):
     parser_remove = subparsers.add_parser("remove", help="remove help")
     parser_remove.add_argument(
         "job", nargs=1, help="the job id of the job to cancel", type=int)
-
+    subparsers.add_parser("info", help="info help")
     args = parser.parse_args()
     if not hasattr(self, args.command):
       print("not found")
@@ -121,7 +142,7 @@ class RHQueueParser(object):
     data.cancel_job(args.job[0])
 
   def queue(self, args):
-    self.processor.add_scriptline("srun -n1 -l {}".format(args.script), 0)
+    self.processor.add_scriptline("srun -n1 {}".format(args.script), 0)
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
 
     # base sbatch arguments
@@ -132,9 +153,6 @@ class RHQueueParser(object):
 
     if args.begin_time:
       self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
-      # print(
-      #     "begin time approx: {}".format(datetime.datetime.now()+ datetime.timedelta(minutes=int(args.begin_time)))
-      # )
 
     # Handle Email
     if args.email:
@@ -151,18 +169,15 @@ class RHQueueParser(object):
     if args.venv:
       self.processor.add_scriptline("source {}/bin/activate".format(args.venv), -1)
       self.processor.add_scriptline("deactivate", 1)
-      # print("venv: {}".format(args.venv))
     
     if args.conda_venv:
       self.processor.add_scriptline("conda activate {}".format(args.conda_venv), -1)
       self.processor.add_scriptline("conda deactivate", 1)
-      # print("conda_venv:{}".format(args.conda_venv))
     
     if args.titan:
-      titans = args.titan.split(",") if "," in args.titan else args.titan
-      w_string = "titan[{}]" if all(i.isdecimal() for i in titans) else "{}"
-      self.processor.add_sbatchline("-w", w_string.format(",".join(titans)))
-      # print("titans:{}".format(w_string.format(','.join(titans))))
+      titans = [str(titan) for titan in self.titans if titan not in args.titan]
+      w_string = "{0}[{1}]".format(self.compute_node_basename,','.join(titans))
+      self.processor.add_sbatchline("-x", w_string.format(",".join(titans)))
 
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.write_file()
@@ -178,29 +193,12 @@ class RHQueueParser(object):
       exit(res)
 
   def info(self, args):
-    info = subprocess.Popen(["squeue"],
+    info = subprocess.run("squeue",
                             stdout=subprocess.PIPE,
                             stdin=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             shell=True)
-    with open("./squeue", "a+") as f:
-      f.write(b"".join(info.stdout.readlines()).decode("utf-8"))
-    print(getpass.getuser())
-
-
-
-
-class DataGridLine(object):
-  def __init__(self, line) -> None:
-    self.id = int(line[0])
-    self.partition = line[1]
-    self.script = line[2]
-    self.user = line[3]
-    self.state = line[4]
-    self.time = line[5]
-    self.nodes = line[6]
-    self.nodelist = line[7]
-
+    print(info.stdout.decode("utf-8"))
 
 
 

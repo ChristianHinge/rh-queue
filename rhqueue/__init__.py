@@ -1,3 +1,8 @@
+import subprocess
+import re
+from typing import List
+import getpass
+
 class ScriptLine(object):
   def __init__(self, arg_value, order):
     super().__init__()
@@ -13,6 +18,8 @@ class ScriptLine(object):
   def __repr__(self):
     return "ScriptLine: arg_value:{} order:{}".format(self.arg_value, self.order)
 
+
+
 class SBatchLine(ScriptLine):
   def __init__(self, arg_name, arg_value):
     super().__init__(arg_value, 0)
@@ -27,6 +34,9 @@ class SBatchLine(ScriptLine):
   def __repr__(self):
     return "SBatchLine: arg_name:{}, arg_value:{}".format(self.arg_name, self.arg_name)
   
+
+
+
 class ScriptCreatorClass(object):
   script_name = "script.sh"
   def __init__(self):
@@ -60,6 +70,10 @@ class ScriptCreatorClass(object):
   def add_sbatchline(self, arg_name, arg_value):
     self.sbatch_args.append(SBatchLine(arg_name, arg_value))
   
+
+
+
+
 class DataGrid(object):
 
   def __init__(self, output):
@@ -103,3 +117,35 @@ class DataGrid(object):
       subprocess.call(["scancel {}".format(job_id)], shell=True)
     else:
       print("You do not have the permission to cancel that job")
+
+
+class DataGridLine(object):
+  def __init__(self, line) -> None:
+    self.id = int(line[0])
+    self.partition = line[1]
+    self.script = line[2]
+    self.user = line[3]
+    self.state = line[4]
+    self.time = line[5]
+    self.nodes = line[6]
+    self.nodelist = line[7]
+
+def get_titans():
+  res_str = subprocess.run(
+    "sinfo",
+    shell=True,
+    stdout = subprocess.PIPE
+  ).stdout.decode("utf-8")
+  sections = res_str.split("[")[1].split("]")[0].split(",")
+  servers = []
+  for section in sections:
+    if "-" in section:
+      servers.extend(handle_dash(section))
+    else:
+      servers.append(section)
+  return list(map(str, servers))
+
+def handle_dash(dash_str:str):
+  start_stop = list(map(int, dash_str.split("-")))
+  start_stop[1] += 1
+  return list(range(*start_stop))

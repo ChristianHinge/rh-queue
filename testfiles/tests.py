@@ -9,7 +9,7 @@ from pathlib import Path
 
 class RHQueueTests(unittest.TestCase):
   v = "/homes/pmcd/venv/test-slurm"
-  t = "1,2,3"
+  t = "1"
   o = "my.stdout"
   p = "3"
   e = "peter.nicolas.castenschiold.mcdaniel@regionh.dk"
@@ -28,12 +28,7 @@ class RHQueueTests(unittest.TestCase):
   def assertFileContentsSame(self, file, expected):
     val = ""
     counter = 0
-    while not os.path.exists(file):
-      time.sleep(1)
-    while Path(file).stat().st_size <= 0:
-      time.sleep(1)
-      if counter > 17 : break
-      counter += 1
+    time.sleep(3)
     if os.path.isfile(file):  
       with open(file, "r") as f:
         val = f.read().rstrip("\n")
@@ -46,6 +41,7 @@ class RHQueueTests(unittest.TestCase):
     script = subprocess.run(self.args("test_create_file.py"))
     self.assertEqual(script.returncode, 0)
     self.assertTrue(os.path.isfile("./new_file.txt"))
+    time.sleep(2)
     self.assertFileContentsSame("./new_file.txt", "new file is created")
 
   def test_without_venv(self):
@@ -103,7 +99,7 @@ class RHQueueTests(unittest.TestCase):
 
   def test_multiple_titans(self):
     self.o = "test_multiple_titans.stdout"
-    for i in [1,2,3,4,7]:
+    for i in [1,2,3,5,7]:
       with self.subTest(titan = i):
         self._sub_titan_test(titan=i)
 
@@ -114,10 +110,11 @@ class RHQueueTests(unittest.TestCase):
     self.assertEqual(script.returncode, 0)
     self.assertFileContentsSame(self.o, f"titan{titan}")
   
-  def test_tensorflow(self):
-    self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
-    script = subprocess.run(self.args("test_tensorflow.py"))
-    self.assertEqual(script.returncode, 0)
+  # def test_tensorflow(self):
+  #   self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
+  #   script = subprocess.run(self.args("test_tensorflow.py"))
+  #   self.assertEqual(script.returncode, 0)
 
 if __name__ == "__main__":
+  unittest.main()
   unittest.main()

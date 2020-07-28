@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from emails import *
 import argparse
-import sys
 class EmailParser(object):
   def __init__(self):
     parser = argparse.ArgumentParser("RHQueue Email Sender")
