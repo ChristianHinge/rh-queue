@@ -99,8 +99,8 @@ class RHQueueParser(object):
     parser_queue.add_argument(
         "-t",
         "--titan",
-        type=str,
-        help="Define the titans that the script can run on. Comma Seperated values",
+        type=int,
+        help="Define the titans that the script can run on.",
         default=[],
         nargs='+'
     )

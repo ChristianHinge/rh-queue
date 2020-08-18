@@ -143,7 +143,7 @@ def get_titans():
       servers.extend(handle_dash(section))
     else:
       servers.append(section)
-  return list(map(str, servers))
+  return servers
 
 def handle_dash(dash_str:str):
   start_stop = list(map(int, dash_str.split("-")))

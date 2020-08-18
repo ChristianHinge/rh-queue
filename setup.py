@@ -6,6 +6,5 @@ setup(name="rh-queue",
         author_email="peter.nicolas.castenschiold.mcdaniel@regionh.dk",
        scripts=["bin/rhqueue", "bin/rhqemail"],
        packages=find_packages(),
-       data_files=[("emails", ["emails/config.ini"])],
        include_package_data=True
        )

@@ -16,9 +16,6 @@ class EmailSender(object):
       self.email_function = self._send_done_email
     elif action == "failed":
       self.email_function = self._send_failed_email
-    self.config = ConfigParser()
-    self.config.read(pkg_resources.resource_filename(__package__, "config.ini"))
-    self.password = self.config["Email"]["Password"]
 
   def send_email(self):
     self.email_function()
