@@ -38,9 +38,9 @@ class SBatchLine(ScriptLine):
 
 
 class ScriptCreatorClass(object):
-  script_name = "script.sh"
-  def __init__(self):
+  def __init__(self, script_name="script.sh"):
     super().__init__()
+    self.script_name = script_name
     self.args = []
     self.sbatch_args = []
     self.script_args = []
@@ -74,7 +74,16 @@ class ScriptCreatorClass(object):
 
 
 
-class DataGrid(object):
+class SqueueDataGrid(object):
+
+  @staticmethod
+  def get_info():
+    info = subprocess.run("squeue",
+                            stdout=subprocess.PIPE,
+                            stdin=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            shell=True)
+    return SqueueDataGrid(info.stdout.decode("utf-8"))
 
   def __init__(self, output):
     self.admin = ["pmcd"]
@@ -144,6 +153,23 @@ def get_titans():
     else:
       servers.append(section)
   return servers
+
+def parse_time(begin_string):
+  ret_seconds = 0
+  for i in re.findall(r"(\d+d)?(\d+h)?(\d+m)?(\d+s)?", begin_string)[0]:
+    if i:
+      case = i[-1]
+      value = int(i[:-1])
+      if "d" in case:
+        ret_seconds += value * 60 * 60 * 24
+      if "h" in case:
+        ret_seconds += value * 60 * 60
+      if "m" in case:
+        ret_seconds += value * 60
+      if "s" in case:
+        ret_seconds += value
+  return ret_seconds
+
 
 def handle_dash(dash_str:str):
   start_stop = list(map(int, dash_str.split("-")))

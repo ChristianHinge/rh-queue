@@ -1,1 +1,2 @@
 include emails/config.ini
+include emails/templates/*.tmp

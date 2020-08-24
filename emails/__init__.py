@@ -1,31 +1,28 @@
 import smtplib, ssl
 from email.message import EmailMessage
 from string import Template
-from configparser import ConfigParser
-import os
 import pkg_resources
+
+
 class EmailSender(object):
-  def __init__(self, to, action, script=None):
+  def __init__(self, **kwargs):
     super().__init__()
-    self.email_to = to
-    self.template_args = {"script": script}
-    self.email_from = "peter.nicolas.castenschiold.mcdaniel@regionh.dk"
-    if action == "start":
-      self.email_function = self._send_start_email
-    elif action == "completed":
-      self.email_function = self._send_done_email
-    elif action == "failed":
-      self.email_function = self._send_failed_email
+    self.email_to = kwargs.get("email", "")
+    self.template_args = {
+        "script": kwargs.get("script", ""),
+        "args": ' '.join(kwargs.get("args", []))
+    }
+    self.email_from = "rhqueue@regionh.dk"
+    self.get_template(kwargs.get("action"))
 
   def send_email(self):
-    self.email_function()
-    self.email_content = Template(self.email_template)
+    self.email_content = Template(self.email_template.decode("utf-8"))
     self.email = EmailMessage()
-    self.email.set_content(self.email_content.safe_substitute(self.template_args))
+    self.email.set_content(
+        self.email_content.safe_substitute(self.template_args))
     self.email["Subject"] = self.email_subject
     self.email["To"] = self.email_to
     self.email["From"] = self.email_from
-    context = ssl.create_default_context()
     try:
       with smtplib.SMTP("10.140.209.2", 25) as server:
         server.ehlo()
@@ -33,14 +30,7 @@ class EmailSender(object):
     except Exception as e:
       print(e)
 
-  def _send_start_email(self):
-    self.email_template = "The script: $script has begun"
-    self.email_subject = "Script Start"
-    
-  def _send_done_email(self):
-    self.email_template = "The script $script has completed without errors"
-    self.email_subject = "Script Completed"
-
-  def _send_failed_email(self):
-    self.email_template = "The script: $script has failed with errors"
-    self.email_subject = "Script Failed"
+  def get_template(self, action):
+    self.email_template = pkg_resources.resource_string(
+        __name__, f'templates/email.{action}.tmp')
+    self.email_subject = f"Script {action}"

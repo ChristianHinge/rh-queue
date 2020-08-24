@@ -12,54 +12,48 @@ from rhqueue import *
 class RHQueueParser(object):
   compute_node_basename = "titan"
   titans = get_titans()
+
   def __init__(self):
     self.processor = ScriptCreatorClass()
 
     # Main Parser
     parser = argparse.ArgumentParser(description="RHQueue")
     subparsers = parser.add_subparsers(
-      help="The subcommand to run options are {queue,remove,info}",
-      dest="command"
-      )
-    
+        help="The subcommand to run options are {queue,remove,info}",
+        dest="command")
+
     # Queue Parser
     parser_queue = subparsers.add_parser("queue", help="Used to queue scripts")
     group = parser_queue.add_mutually_exclusive_group()
-    parser_queue.add_argument(
-        "script",
-        metavar="script",
-        type=str,
-        help="""
+    parser_queue.add_argument("script",
+                              metavar="script",
+                              type=str,
+                              help="""
           The script to run on a gpu.
           At the top of each file there must be the shebang '#!/usr/bin/env <python_version>'
           Where <python_version> is the version of python needed, python(for 2.7) or python3
-        """
-    )
+        """)
     # venv defaults
     venv = os.environ.get("RHQ_VENV", "")
     venv = os.environ.get("VIRTUAL_ENV", venv)
-    group.add_argument(
-        "-v",
-        "--venv",
-        metavar="venv",
-        type=str,
-        help="""
+    group.add_argument("-v",
+                       "--venv",
+                       metavar="venv",
+                       type=str,
+                       help="""
           The virtual environment used for the project. 
           The value is the absolute path to the virtual environment directoy
         """,
-        default=venv
-    )
-    group.add_argument(
-      "-c",
-      "--conda-venv",
-      metavar="condaVenv",
-      type=str,
-      help="""
+                       default=venv)
+    group.add_argument("-c",
+                       "--conda-venv",
+                       metavar="condaVenv",
+                       type=str,
+                       help="""
         The environment for conda. 
         This is supposed to be the name of the conda environment.
       """,
-      default=os.environ.get("RHQ_CONDA_VENV", "")
-    )
+                       default=os.environ.get("RHQ_CONDA_VENV", ""))
     parser_queue.add_argument(
         "-p",
         "--priority",
@@ -70,31 +64,29 @@ class RHQueueParser(object):
         "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY."
     )
 
-    parser_queue.add_argument(
-        "-e",
-        "--email",
-        type=str,
-        help="""
+    parser_queue.add_argument("-e",
+                              "--email",
+                              type=str,
+                              help="""
           The email to send to when the script begins and ends.
           Can be defined as environment variable (export RHQ_EMAIL=<email>) to use as a default.
           This will prefer the email given in the argument line over the environtment variable
         """,
-        default=os.environ.get("RHQ_EMAIL", "")
-    )
+                              default=os.environ.get("RHQ_EMAIL", ""))
 
-    parser_queue.add_argument(
-        "-o",
-        "--output-file",
-        type=str,
-        default="my.stdout",
-        help="""
+    parser_queue.add_argument("-o",
+                              "--output-file",
+                              type=str,
+                              default="my.stdout",
+                              help="""
           The file for the output of the script.
           This is the path to the file.
           Default is 'my.stdout'
-        """
-    )
-    parser_queue.add_argument(
-        "-b", "--begin-time", type=str, help="Begin script after (b) seconds")
+        """)
+    parser_queue.add_argument("-b",
+                              "--begin-time",
+                              type=str,
+                              help="Begin script after (b) seconds")
 
     parser_queue.add_argument(
         "-t",
@@ -102,48 +94,50 @@ class RHQueueParser(object):
         type=int,
         help="Define the titans that the script can run on.",
         default=[],
-        nargs='+'
-    )
-    parser_queue.add_argument(
-      "-a",
-      "--args",
-      help="""
+        nargs='+')
+    parser_queue.add_argument("-a",
+                              "--args",
+                              help="""
         The arguments for the script. 
         These are passed to the script to run.
         Pass these in the same method as you would normally
       """,
-      default=[],
-      nargs="+"
-    )
-    parser_queue.add_argument(
-      "--test", 
-      help="script is a test. Ignore this",
-      action="store_true",
-      default=False
-    )
+                              default=[],
+                              nargs="+")
+    parser_queue.add_argument("--test",
+                              help="script is a test. Ignore this",
+                              action="store_true",
+                              default=False)
 
     # Remove Subparser
     parser_remove = subparsers.add_parser("remove", help="remove help")
-    parser_remove.add_argument(
-        "job", nargs=1, help="the job id of the job to cancel", type=int)
+    parser_remove.add_argument("job",
+                               nargs=1,
+                               help="the job id of the job to cancel",
+                               type=int)
     subparsers.add_parser("info", help="info help")
     args = parser.parse_args()
-    if not hasattr(self, args.command):
-      print("not found")
+    if args.command is None:
+      print("No Arguments were given")
       parser.print_help()
       exit(1)
-    
+    if not hasattr(self, args.command):
+      print("The argument given was not found")
+      parser.print_help()
+      exit(1)
+
     getattr(self, args.command)(args)
 
   def remove(self, args):
     queue = subprocess.Popen(["squeue"],
                              stdout=subprocess.PIPE).stdout.readlines()
-    data = DataGrid(queue)
+    data = SqueueDataGrid(queue)
     data.cancel_job(args.job[0])
 
   def queue(self, args):
-    self.processor.add_scriptline("srun -n1 {}".format(args.script), 0)
-    self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -5)
+    self.processor.add_scriptline(
+        "srun -n1 {} {}".format(os.path.abspath(args.script), " ".join(args.args)), 0)
+    self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
     # base sbatch arguments
     self.processor.add_sbatchline("--priority", args.priority)
@@ -152,54 +146,62 @@ class RHQueueParser(object):
     self.processor.add_sbatchline("-o", args.output_file)
 
     if args.begin_time:
-      self.processor.add_sbatchline("--begin", "now+{}".format(args.begin_time))
+      seconds = parse_time(args.begin_time)
+      self.processor.add_sbatchline("--begin", "now+{}".format(seconds))
 
     # Handle Email
     if args.email:
-      self.processor.add_scriptline("rhqemail start {} {}".format(args.email, args.script), -10)
       self.processor.add_scriptline(
-      """if [$? -eq 0]; then
+          f"rhqemail start {args.email} {os.path.abspath(args.script)} {' '.join(args.args)}",
+          -5)
+      self.processor.add_scriptline(
+          """if [$? -eq 0]; then
         rhqemail completed {0} {1} 
       else
         rhqemail failed {0} {1}
       fi
-      """.format(args.email, args.script ), 2)
+      """.format(args.email, args.script), 2)
 
     #Handle venv
     if args.venv:
-      self.processor.add_scriptline("source {}/bin/activate".format(args.venv), -1)
+      self.processor.add_scriptline("source {}/bin/activate".format(args.venv),
+                                    -1)
       self.processor.add_scriptline("deactivate", 1)
-    
+
     if args.conda_venv:
-      self.processor.add_scriptline("conda activate {}".format(args.conda_venv), -1)
+      self.processor.add_scriptline(
+          "conda activate {}".format(args.conda_venv), -1)
       self.processor.add_scriptline("conda deactivate", 1)
-    
+
     if args.titan:
       titans = [str(titan) for titan in self.titans if titan not in args.titan]
-      w_string = "{0}[{1}]".format(self.compute_node_basename,','.join(titans))
+      w_string = "{0}[{1}]".format(self.compute_node_basename,
+                                   ','.join(titans))
       self.processor.add_sbatchline("-x", w_string.format(",".join(titans)))
 
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.write_file()
-    script = "sbatch ./{}".format(self.processor.script_name)
+
     if args.test:
       print(args)
     else:
+      script = "sbatch ./{}".format(self.processor.script_name)
       subprocess.call(["chmod +x {}".format(args.script)],
                       stdout=subprocess.PIPE,
                       shell=True)
-      res = subprocess.call(["{}".format(script)], stdout=subprocess.PIPE, shell=True)
+      res = subprocess.run("{}".format(script),
+                           stdout=subprocess.PIPE,
+                           shell=True)
       subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
-      exit(res)
+      exit(res.returncode)
 
   def info(self, args):
     info = subprocess.run("squeue",
-                            stdout=subprocess.PIPE,
-                            stdin=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            shell=True)
+                          stdout=subprocess.PIPE,
+                          stdin=subprocess.PIPE,
+                          stderr=subprocess.PIPE,
+                          shell=True)
     print(info.stdout.decode("utf-8"))
-
 
 
 if __name__ == "__main__":

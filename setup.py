@@ -6,5 +6,7 @@ setup(name="rh-queue",
         author_email="peter.nicolas.castenschiold.mcdaniel@regionh.dk",
        scripts=["bin/rhqueue", "bin/rhqemail"],
        packages=find_packages(),
+#        package_dir={'emails', 'emails'},
+       package_data={"emails": ["emails/templates/*.tmp"]},
        include_package_data=True
        )
