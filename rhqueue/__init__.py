@@ -38,15 +38,20 @@ class SBatchLine(ScriptLine):
 
 
 class ScriptCreatorClass(object):
-  def __init__(self, script_name="script.sh"):
+  def __init__(self):
     super().__init__()
-    self.script_name = script_name
+    self.script_name = "script.sh"
     self.args = []
     self.sbatch_args = []
     self.script_args = []
+    
 
+
+  def get_script_command_line(self):
+    return "sbatch ./{}".format(self.script_name)
+  
   def write_file(self):
-    script = self.create_script()
+    script = self._create_script_string()
     with open(self.script_name, "w+") as file:
       file.write(script)
 
@@ -57,7 +62,7 @@ class ScriptCreatorClass(object):
     else:
       return str(val.arg_value)
 
-  def create_script(self):
+  def _create_script_string(self):
     self.args.sort()
     self.sbatch_args.sort()
     sbatch_str = "#SBATCH " + " ".join(map(self._create_line, self.sbatch_args)) + "\n"

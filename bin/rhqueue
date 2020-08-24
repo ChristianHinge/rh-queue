@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 import argparse
 import subprocess
+import re
 import os
-import datetime
-import sys
-import getpass
-from typing import List
+from multiprocessing import Pool, Queue, Manager
+from typing import Dict, Union
 from rhqueue import *
 
 
 class RHQueueParser(object):
   compute_node_basename = "titan"
   titans = get_titans()
+  exclude_titans = []
 
   def __init__(self):
     self.processor = ScriptCreatorClass()
@@ -108,6 +108,10 @@ class RHQueueParser(object):
                               help="script is a test. Ignore this",
                               action="store_true",
                               default=False)
+    parser_queue.add_argument(
+        "--script-name",
+        help="The name of the script file name that is inserted into the queue",
+        type=str)
 
     # Remove Subparser
     parser_remove = subparsers.add_parser("remove", help="remove help")
@@ -136,7 +140,8 @@ class RHQueueParser(object):
 
   def queue(self, args):
     self.processor.add_scriptline(
-        "srun -n1 {} {}".format(os.path.abspath(args.script), " ".join(args.args)), 0)
+        "srun -n1 {} {}".format(os.path.abspath(args.script),
+                                " ".join(args.args)), 0)
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
     # base sbatch arguments
@@ -144,6 +149,8 @@ class RHQueueParser(object):
     self.processor.add_sbatchline("--ntasks", "1")
     self.processor.add_sbatchline("--gres", "gpu:titan:1")
     self.processor.add_sbatchline("-o", args.output_file)
+    self.processor.add_sbatchline(
+        "--job-name", args.script_name if args.script_name else args.script)
 
     if args.begin_time:
       seconds = parse_time(args.begin_time)
@@ -174,6 +181,7 @@ class RHQueueParser(object):
       self.processor.add_scriptline("conda deactivate", 1)
 
     if args.titan:
+      print(args.titan, self.titans, args.titans + self.titans)
       titans = [str(titan) for titan in self.titans if titan not in args.titan]
       w_string = "{0}[{1}]".format(self.compute_node_basename,
                                    ','.join(titans))
@@ -185,11 +193,10 @@ class RHQueueParser(object):
     if args.test:
       print(args)
     else:
-      script = "sbatch ./{}".format(self.processor.script_name)
       subprocess.call(["chmod +x {}".format(args.script)],
                       stdout=subprocess.PIPE,
                       shell=True)
-      res = subprocess.run("{}".format(script),
+      res = subprocess.run(self.processor.get_script_command_line(),
                            stdout=subprocess.PIPE,
                            shell=True)
       subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
@@ -204,5 +211,46 @@ class RHQueueParser(object):
     print(info.stdout.decode("utf-8"))
 
 
+def check_server(server):
+  res = subprocess.run(f"ssh {server} nvidia-smi | grep No",
+                       stdout=subprocess.PIPE,
+                       shell=True)
+  return (server, bool(res.stdout))
+
+
+def get_open_servers(output_string):
+  servers = []
+  temp = re.findall(r"([a-zA=Z]+)(\d+|\[((\d+|(\d+-\d+)),?)+\])",
+                    output_string)
+  for value in temp:
+    name = value[0]
+    for entry in value[1][1:-1].split(","):
+      entry: str
+      if "-" in entry:
+        start, stop, *_ = entry.split("-")
+        servers.extend(
+            [*map(lambda x: f"{name}{x}", range(int(start),
+                                                int(stop) + 1))])
+      else:
+        servers.append(f"{name}{entry}")
+
+  pool = Pool(7)
+  vals = pool.map(check_server, servers)
+  return [val[0] for val in vals if val[1]]
+
+
+def handle_slurm_output(output) -> Dict[str, str]:
+  values = re.findall(r"(OS)=(.+)|(\S+)=(\S+)", output)
+  return {(val[2] if val[2] else val[0]): (val[3] if val[2] else val[0])
+          for val in values}
+
+
 if __name__ == "__main__":
-  RHQueueParser()
+  # get_open_servers()
+  values = handle_slurm_output(
+      subprocess.run("scontrol show partitions",
+                     stdout=subprocess.PIPE,
+                     shell=True).stdout.decode("utf-8"))
+  get_open_servers(values["Nodes"])
+  # print(DataGridLine([*range(8)]))
+  # RHQueueParser()
