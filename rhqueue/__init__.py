@@ -109,11 +109,11 @@ class SqueueDataGrid(object):
         waiting_lines.append(self._get_columns(value, *args))
         
   def _get_columns(self, line, *args):
-    return [value for idx, value in enumerate(line) if idx in args]
-  
+    return [f"{value:10}" for idx, value in enumerate(line) if idx in args]
 
   def _print_break(self):
     pass
+  
   def get_info_about_user(self):
     ret = []
     for line in self.data:

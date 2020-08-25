@@ -3,3 +3,5 @@ testfiles\new_file.txt
 build/*
 *config*
 *munge.key
+*.pyc
+*.egg-info*
