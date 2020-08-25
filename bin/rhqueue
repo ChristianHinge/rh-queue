@@ -3,16 +3,12 @@ import argparse
 import subprocess
 import re
 import os
-from multiprocessing import Pool, Queue, Manager
-from typing import Dict, Union
+from multiprocessing import Pool
+from typing import Dict
 from rhqueue import *
 
 
 class RHQueueParser(object):
-  compute_node_basename = "titan"
-  titans = get_titans()
-  exclude_titans = []
-
   def __init__(self):
     self.processor = ScriptCreatorClass()
 
@@ -89,12 +85,10 @@ class RHQueueParser(object):
                               help="Begin script after (b) seconds")
 
     parser_queue.add_argument(
-        "-t",
-        "--titan",
-        type=int,
-        help="Define the titans that the script can run on.",
-        default=[],
-        nargs='+')
+        "-s",
+        "--servers",
+        type=str,
+        help="Define the servers that the script can run on.")
     parser_queue.add_argument("-a",
                               "--args",
                               help="""
@@ -133,12 +127,15 @@ class RHQueueParser(object):
     getattr(self, args.command)(args)
 
   def remove(self, args):
-    queue = subprocess.Popen(["squeue"],
-                             stdout=subprocess.PIPE).stdout.readlines()
-    data = SqueueDataGrid(queue)
+    data = SqueueDataGrid()
     data.cancel_job(args.job[0])
 
   def queue(self, args):
+    values = handle_slurm_output(
+        subprocess.run("scontrol show partitions",
+                       stdout=subprocess.PIPE,
+                       shell=True).stdout.decode("utf-8"))
+    self.open_servers = get_open_servers(values["Nodes"])
     self.processor.add_scriptline(
         "srun -n1 {} {}".format(os.path.abspath(args.script),
                                 " ".join(args.args)), 0)
@@ -180,12 +177,9 @@ class RHQueueParser(object):
           "conda activate {}".format(args.conda_venv), -1)
       self.processor.add_scriptline("conda deactivate", 1)
 
-    if args.titan:
-      print(args.titan, self.titans, args.titans + self.titans)
-      titans = [str(titan) for titan in self.titans if titan not in args.titan]
-      w_string = "{0}[{1}]".format(self.compute_node_basename,
-                                   ','.join(titans))
-      self.processor.add_sbatchline("-x", w_string.format(",".join(titans)))
+    if args.servers:
+      servers = set(self.open_servers) - set(args.servers.split(","))
+      self.processor.add_sbatchline("-x", ",".join(servers))
 
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.write_file()
@@ -203,54 +197,9 @@ class RHQueueParser(object):
       exit(res.returncode)
 
   def info(self, args):
-    info = subprocess.run("squeue",
-                          stdout=subprocess.PIPE,
-                          stdin=subprocess.PIPE,
-                          stderr=subprocess.PIPE,
-                          shell=True)
-    print(info.stdout.decode("utf-8"))
-
-
-def check_server(server):
-  res = subprocess.run(f"ssh {server} nvidia-smi | grep No",
-                       stdout=subprocess.PIPE,
-                       shell=True)
-  return (server, bool(res.stdout))
-
-
-def get_open_servers(output_string):
-  servers = []
-  temp = re.findall(r"([a-zA=Z]+)(\d+|\[((\d+|(\d+-\d+)),?)+\])",
-                    output_string)
-  for value in temp:
-    name = value[0]
-    for entry in value[1][1:-1].split(","):
-      entry: str
-      if "-" in entry:
-        start, stop, *_ = entry.split("-")
-        servers.extend(
-            [*map(lambda x: f"{name}{x}", range(int(start),
-                                                int(stop) + 1))])
-      else:
-        servers.append(f"{name}{entry}")
-
-  pool = Pool(7)
-  vals = pool.map(check_server, servers)
-  return [val[0] for val in vals if val[1]]
-
-
-def handle_slurm_output(output) -> Dict[str, str]:
-  values = re.findall(r"(OS)=(.+)|(\S+)=(\S+)", output)
-  return {(val[2] if val[2] else val[0]): (val[3] if val[2] else val[0])
-          for val in values}
+    info = SqueueDataGrid()
+    info.print_val(1, 2, 3)
 
 
 if __name__ == "__main__":
-  # get_open_servers()
-  values = handle_slurm_output(
-      subprocess.run("scontrol show partitions",
-                     stdout=subprocess.PIPE,
-                     shell=True).stdout.decode("utf-8"))
-  get_open_servers(values["Nodes"])
-  # print(DataGridLine([*range(8)]))
-  # RHQueueParser()
+  RHQueueParser()

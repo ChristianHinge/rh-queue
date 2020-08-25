@@ -1,4 +1,4 @@
-import smtplib, ssl
+import smtplib
 from email.message import EmailMessage
 from string import Template
 import pkg_resources
