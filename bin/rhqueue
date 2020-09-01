@@ -113,7 +113,9 @@ class RHQueueParser(object):
                                nargs=1,
                                help="the job id of the job to cancel",
                                type=int)
-    subparsers.add_parser("info", help="info help")
+  
+    parser_info = subparsers.add_parser("info", help="info help")
+    parser_info.add_argument("--job-id", "-j", help="the job id to get further information about")
     args = parser.parse_args()
     if args.command is None:
       print("No Arguments were given")
@@ -127,7 +129,7 @@ class RHQueueParser(object):
     getattr(self, args.command)(args)
 
   def remove(self, args):
-    data = SqueueDataGrid()
+    data = SqueueDataGridHandler()
     data.cancel_job(args.job[0])
 
   def queue(self, args):
@@ -197,8 +199,12 @@ class RHQueueParser(object):
       exit(res.returncode)
 
   def info(self, args):
-    info = SqueueDataGrid()
-    info.print_val(1, 2, 3)
+    info = SqueueDataGridHandler()
+    if args.job_id:
+      info.print_extra_information(args.job_id)
+    else:
+      info.print_vals(10, 0, 3, 2, 5, 4)
+      
 
 
 if __name__ == "__main__":

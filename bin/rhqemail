@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
-import sys
-print(sys.path)
-# from emails import *
-# import argparse
-# class EmailParser(object):
-#   def __init__(self):
-#     parser = argparse.ArgumentParser("RHQueue Email Sender")
-#     parser.add_argument(
-#       "action", choices=["start", "completed", "failed"], help="The content of the email to send"
-#     )
-#     parser.add_argument(
-#       "email", help="email to send to"
-#     )
-#     parser.add_argument(
-#       "script", help="The script the email is about"
-#     )
-#     parser.add_argument(
-#       "args", help="the arguments passed to the script", nargs="+"
-#     )
-#     args = parser.parse_args()
-#     EmailSender(email=args.email, action=args.action, script=args.script, args=args.args).send_email()
+from rhemails import *
+import argparse
+class EmailParser(object):
+  def __init__(self):
+    parser = argparse.ArgumentParser("RHQueue Email Sender")
+    parser.add_argument(
+      "action", choices=["start", "completed", "failed"], help="The content of the email to send"
+    )
+    parser.add_argument(
+      "email", help="email to send to"
+    )
+    parser.add_argument(
+      "script", help="The script the email is about"
+    )
+    parser.add_argument(
+      "args", help="the arguments passed to the script", nargs="+"
+    )
+    args = parser.parse_args()
+    EmailSender(email=args.email, action=args.action, script=args.script, args=args.args).send_email()
 
-# if __name__ == "__main__":
-#   EmailParser()
+if __name__ == "__main__":
+  EmailParser()
