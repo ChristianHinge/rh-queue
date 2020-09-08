@@ -84,3 +84,7 @@ def handle_slurm_output(output) -> Dict[str, str]:
   values = re.findall(r"(OS)=(.+)|(\S+)=(\S+)", output)
   return {(val[2] if val[2] else val[0]): (val[3] if val[2] else val[0])
           for val in values}
+  
+def handle_script_name(args):
+  print(args)
+  return args

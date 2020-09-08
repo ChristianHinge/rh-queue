@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import subprocess
-import re
 import os
-from multiprocessing import Pool
-from typing import Dict
 from rhqueue import *
 
 
@@ -13,8 +10,8 @@ class RHQueueParser(object):
     self.processor = ScriptCreatorClass()
 
     # Main Parser
-    parser = argparse.ArgumentParser(description="RHQueue")
-    subparsers = parser.add_subparsers(
+    self.parser = argparse.ArgumentParser(description="RHQueue", add_help=False)
+    subparsers = self.parser.add_subparsers(
         help="The subcommand to run options are {queue,remove,info}",
         dest="command")
 
@@ -87,7 +84,7 @@ class RHQueueParser(object):
     parser_queue.add_argument(
         "-s",
         "--servers",
-        type=str,
+        type=slurm_nodelist_to_list,
         help="Define the servers that the script can run on.")
     parser_queue.add_argument("-a",
                               "--args",
@@ -104,30 +101,56 @@ class RHQueueParser(object):
                               default=False)
     parser_queue.add_argument(
         "--script-name",
-        help="The name of the script file name that is inserted into the queue",
-        type=str)
-
+        help="The name of the script file name that is inserted into the queue"
+    )
+    self.parser.add_argument("-h", action="help", help="print basic help")
+    self.parser.add_argument("--help",
+                        action="store_true",
+                        help="print extended help")
     # Remove Subparser
     parser_remove = subparsers.add_parser("remove", help="remove help")
     parser_remove.add_argument("job",
                                nargs=1,
                                help="the job id of the job to cancel",
                                type=int)
-  
+
     parser_info = subparsers.add_parser("info", help="info help")
-    parser_info.add_argument("--job-id", "-j", help="the job id to get further information about")
-    args = parser.parse_args()
-    if args.command is None:
-      print("No Arguments were given")
-      parser.print_help()
+    parser_info.add_argument(
+        "--job-id", "-j", help="the job id to get further information about")
+    parser_info.add_argument(
+      "-v", "--verbosity", help="the level of verbosity", type=int, choices=[1,2]
+    )
+    args = self.parser.parse_args()
+    
+    if args.help:
+      self.parser.print_help()
+      print("Queue sub-command")
+      parser_queue.print_help()
+      print("Remove sub-command")
+      parser_remove.print_help()
+      print("Info sub-command")
+      parser_info.print_help()
       exit(1)
-    if not hasattr(self, args.command):
+    
+    
+    self.args = args
+
+  
+
+class RHQueueHander:
+  processor = ScriptCreatorClass()
+  def __init__(self, parser) -> None:
+    if parser.args.command is None:
+      print("No Arguments were given")
+      parser.parser.print_help()
+      exit(1)
+    
+    if not hasattr(self, parser.args.command):
       print("The argument given was not found")
       parser.print_help()
       exit(1)
-
-    getattr(self, args.command)(args)
-
+    getattr(self, parser.args.command)(parser.args)
+    
   def remove(self, args):
     data = SqueueDataGridHandler()
     data.cancel_job(args.job[0])
@@ -137,10 +160,14 @@ class RHQueueParser(object):
         subprocess.run("scontrol show partitions",
                        stdout=subprocess.PIPE,
                        shell=True).stdout.decode("utf-8"))
-    self.open_servers = get_open_servers(values["Nodes"])
+    
+    args.script_name = args.script_name if args.script_name else args.script
+    
+    open_servers = get_open_servers(values["Nodes"])
     self.processor.add_scriptline(
         "srun -n1 {} {}".format(os.path.abspath(args.script),
                                 " ".join(args.args)), 0)
+    
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
     # base sbatch arguments
@@ -180,7 +207,7 @@ class RHQueueParser(object):
       self.processor.add_scriptline("conda deactivate", 1)
 
     if args.servers:
-      servers = set(self.open_servers) - set(args.servers.split(","))
+      servers = set(open_servers) - set(args.servers)
       self.processor.add_sbatchline("-x", ",".join(servers))
 
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
@@ -201,11 +228,9 @@ class RHQueueParser(object):
   def info(self, args):
     info = SqueueDataGridHandler()
     if args.job_id:
-      info.print_extra_information(args.job_id)
+      info.print_extra_information(args.job_id, args.verbosity)
     else:
-      info.print_vals(10, 0, 3, 2, 5, 4)
-      
-
+      info.print_vals(10, 0, 3, 2, 5, 7)
 
 if __name__ == "__main__":
-  RHQueueParser()
+  RHQueueHander(RHQueueParser())

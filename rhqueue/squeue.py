@@ -18,15 +18,28 @@ class SqueueDataGridHandler(BaseDataGridHandler):
   def print_vals(self, spacing, *args):
     SqueueDataGridPrinter(self.headers, self.data, spacing, *args)
 
-  def print_extra_information(self, job_id):
+  def print_extra_information(self, job_id, verbosity=2):
     res = subprocess.run(f"scontrol show jobs -dd {job_id}",
                          shell=True,
                          stdout=subprocess.PIPE)
     if res.returncode != 0:
       print("there was a problem getting the job")
     else:
+      keys = [
+          [
+              "EligibleTime", "SubmitTime", "StartTime", "ExcNodeList",
+              "JobId", "JobName", "JobState", "StdOut", "UserId", "WorkDir", "NodesList"
+          ]
+      ]
+      verbosity_keys = [j for (idx,val) in enumerate(keys) for j in val]
       output = handle_slurm_output(res.stdout.decode("utf-8"))
-      GridPrinter([sorted(list(output.items()),key=lambda x:x[0])],headers=[["Key", "Value"]],
+      verbosity_dict = {i: output[i]
+                       for i in output.keys() if i in verbosity_keys} if verbosity < 2 else output
+      GridPrinter([
+          sorted(list(verbosity_dict.items()),
+                 key=lambda x: x[0])
+      ],
+                  headers=[["Key", "Value"]],
                   title=f"Information about job:{job_id}")
 
   def get_info_about_user(self):

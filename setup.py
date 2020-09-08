@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 # print(find_packages())
-setup(name="rh-queue",
+setup(name="rhqueue",
         version="0.5",
         description="rh queue system for queueing scripts",
         author="Peter McDaniel",
