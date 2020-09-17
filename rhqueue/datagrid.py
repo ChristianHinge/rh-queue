@@ -12,8 +12,7 @@ class BaseDataGridLine(list):
 
 
 class BaseDataGridHandler(list):
-  def __init__(self, grid, dataline_class =BaseDataGridLine) -> None:
-    self.dataline_class = dataline_class
+  def __init__(self, grid) -> None:
     self.headers = self._to_dataline(grid[0])
     self.data = []
     for line in grid[1:]:
@@ -24,4 +23,4 @@ class BaseDataGridHandler(list):
     return [data for data in line.split(" ") if data]
 
   def _to_dataline(self, line):
-    return self.dataline_class(self._handle_line(line))
+    return BaseDataGridLine(self._handle_line(line))

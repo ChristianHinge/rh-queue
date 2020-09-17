@@ -14,7 +14,7 @@ class EmailParser(object):
       "script", help="The script the email is about"
     )
     parser.add_argument(
-      "args", help="the arguments passed to the script", nargs="+"
+      "args", help="the arguments passed to the script", nargs="*"
     )
     args = parser.parse_args()
     EmailSender(email=args.email, action=args.action, script=args.script, args=args.args).send_email()

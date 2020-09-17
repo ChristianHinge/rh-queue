@@ -7,7 +7,7 @@ class SinfoDataGridHandler(BaseDataGridHandler):
   
 
   @property
-  def open_titans(self):
+  def open_servers(self):
     self.data: List[SinfoDataGridLine]
     return [i.id for i in self.data if i.is_open]
 

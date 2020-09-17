@@ -1,3 +1,5 @@
+from argparse import Namespace
+from sys import argv
 import unittest
 import subprocess
 import os
@@ -6,19 +8,21 @@ import inspect
 import time
 import glob
 from pathlib import Path
+from rhqueue.parser import RHQueueParser
+
 
 class RHQueueTests(unittest.TestCase):
   v = "/homes/pmcd/venv/test-slurm"
-  t = "1"
+  s = "1"
   o = "my.stdout"
   p = "3"
   e = "peter.nicolas.castenschiold.mcdaniel@regionh.dk"
   b = "3"
   args_lst = []
-  base_args = ["v", "t", "o"]
-  begin_args = ["v", "t", "o", "p"]
+  base_args = ["v", "s", "o"]
+  begin_args = ["v", "s", "o", "p"]
 
-  def args(self, file, args=["v", "t", "o"]):
+  def args(self, file, args=["v", "s", "o"]):
 
     ret = ["rhqueue", "queue", file]
     for val in args:
@@ -29,7 +33,7 @@ class RHQueueTests(unittest.TestCase):
     val = ""
     counter = 0
     time.sleep(3)
-    if os.path.isfile(file):  
+    if os.path.isfile(file):
       with open(file, "r") as f:
         val = f.read().rstrip("\n")
     else:
@@ -40,8 +44,8 @@ class RHQueueTests(unittest.TestCase):
     self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
     script = subprocess.run(self.args("test_create_file.py"))
     self.assertEqual(script.returncode, 0)
-    self.assertTrue(os.path.isfile("./new_file.txt"))
     time.sleep(2)
+    self.assertTrue(os.path.isfile("./new_file.txt"))
     self.assertFileContentsSame("./new_file.txt", "new file is created")
 
   def test_without_venv(self):
@@ -83,13 +87,15 @@ class RHQueueTests(unittest.TestCase):
     self.o = "test_shebang_env.stdout"
     script = subprocess.run(self.args("test_shebang_env.py"))
     self.assertEqual(script.returncode, 0)
-    self.assertFileContentsSame(self.o, "/homes/pmcd/venv/test-slurm/bin/python")
+    self.assertFileContentsSame(self.o,
+                                "/homes/pmcd/venv/test-slurm/bin/python")
 
   def test_shebang_venv(self):
     self.o = "test_shebang_venv.stdout"
     script = subprocess.run(self.args("test_shebang_venv.py"))
     self.assertEqual(script.returncode, 0)
-    self.assertFileContentsSame(self.o, "/homes/pmcd/venv/test-slurm/bin/python3")
+    self.assertFileContentsSame(self.o,
+                                "/homes/pmcd/venv/test-slurm/bin/python3")
 
   def test_shebang_bin(self):
     self.o = "test_shebang_bin.stdout"
@@ -99,22 +105,17 @@ class RHQueueTests(unittest.TestCase):
 
   def test_multiple_titans(self):
     self.o = "test_multiple_titans.stdout"
-    for i in [1,2,3,5,7]:
-      with self.subTest(titan = i):
-        self._sub_titan_test(titan=i)
+    for i in [1, 2, 3, 4, 5, 7]:
+      with self.subTest(titan=f"titan{i}"):
+        self._sub_titan_test(titan=f"titan{i}")
 
   def _sub_titan_test(self, titan):
-    self.o = f"test_multiple_titans{titan}.stdout"
-    self.t = str(titan)
+    self.o = f"test_multiple_{titan}.stdout"
+    self.s = titan
     script = subprocess.run(self.args("test_titan_hostname.py"))
     self.assertEqual(script.returncode, 0)
-    self.assertFileContentsSame(self.o, f"titan{titan}")
-  
-  # def test_tensorflow(self):
-  #   self.o = f"{inspect.currentframe().f_code.co_name}.stdout"
-  #   script = subprocess.run(self.args("test_tensorflow.py"))
-  #   self.assertEqual(script.returncode, 0)
+    self.assertFileContentsSame(self.o, titan)
+
 
 if __name__ == "__main__":
-  unittest.main()
   unittest.main()

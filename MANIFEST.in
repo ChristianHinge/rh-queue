@@ -1,1 +1,1 @@
-include emails/templates/*.tmp
+include rhemails/templates/*.tmp
