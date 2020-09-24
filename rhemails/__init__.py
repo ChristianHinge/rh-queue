@@ -1,3 +1,4 @@
+import os
 import smtplib
 from email.message import EmailMessage
 from string import Template
@@ -10,10 +11,13 @@ class EmailSender(object):
     self.email_to = kwargs.get("email", "")
     self.template_args = {
         "script": kwargs.get("script", ""),
-        "args": ' '.join(kwargs.get("args", []))
+        "args": ' '.join(kwargs.get("args", [])),
+        "node": os.environ["SLURM_JOB_NODELIST"],
+        "script_name": os.environ["SLURM_JOB_NAME"],
+        "job_id": os.environ["SLURM_JOBID"]        
     }
     self.email_from = "rhqueue@regionh.dk"
-    self.get_template(kwargs.get("action"))
+    self.get_template(kwargs.get("action"), self.template_args["script_name"])
 
   def send_email(self):
     self.email_content = Template(self.email_template.decode("utf-8"))
@@ -30,7 +34,7 @@ class EmailSender(object):
     except Exception as e:
       print(e)
 
-  def get_template(self, action):
+  def get_template(self, action, script_name):
     self.email_template = pkg_resources.resource_string(
         __name__, f'templates/email.{action}.tmp')
-    self.email_subject = f"Script {action}"
+    self.email_subject = f"Script {script_name} {action}"

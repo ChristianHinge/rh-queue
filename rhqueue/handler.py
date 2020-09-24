@@ -25,14 +25,9 @@ class RHQueueHander:
     data.cancel_job(args.job[0])
 
   def queue(self, args):
-    values = handle_slurm_output(
-        subprocess.run("scontrol show partitions",
-                       stdout=subprocess.PIPE,
-                       shell=True).stdout.decode("utf-8"))
 
     args.script_name = args.script_name if args.script_name else args.script
 
-    open_servers = get_open_servers(values["Nodes"])
     self.processor.add_scriptline(
         "srun -n1 {} {}".format(os.path.abspath(args.script),
                                 " ".join(args.args)), 0)
@@ -40,6 +35,7 @@ class RHQueueHander:
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
     # base sbatch arguments
+    self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.add_sbatchline("--priority", args.priority)
     self.processor.add_sbatchline("--ntasks", "1")
     self.processor.add_sbatchline("--gres", "gpu:titan:1")
@@ -48,21 +44,17 @@ class RHQueueHander:
         "--job-name", args.script_name if args.script_name else args.script)
 
     if args.begin_time:
-      seconds = parse_time(args.begin_time)
-      self.processor.add_sbatchline("--begin", "now+{}".format(seconds))
+      self.processor.add_sbatchline("--begin",
+                                    "now+{}".format(args.begin_time))
 
     # Handle Email
     if args.email:
       self.processor.add_scriptline(
           f"rhqemail start {args.email} {os.path.abspath(args.script)} {' '.join(args.args)}",
           -5)
+      end_str = "if [[ $? -eq 0 ]]; then\n" + "  rhqemail completed {0} {1} {2}\n" + "else\n" + " rhqemail failed {0} {1} {2}\n" + "fi\n"
       self.processor.add_scriptline(
-          """if [$? -eq 0]; then
-        rhqemail completed {0} {1} 
-      else
-        rhqemail failed {0} {1}
-      fi
-      """.format(args.email, args.script), 2)
+          end_str.format(args.email, os.path.abspath(args.script), ' '.join(args.args)), 2)
 
     #Handle venv
     if args.venv:
@@ -76,10 +68,9 @@ class RHQueueHander:
       self.processor.add_scriptline("conda deactivate", 1)
 
     if args.servers:
-      servers = ServerSet(args.servers).invert
-      self.processor.add_sbatchline("-x", ",".join(servers))
+      self.processor.add_sbatchline("-x", ",".join(args.servers.invert))
 
-    self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
+    
     self.processor.write_file()
 
     if args.test:

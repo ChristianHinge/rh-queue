@@ -30,8 +30,7 @@ def check_server(server):
 
 
 def get_open_servers(output_string):
-  servers = ServerSet.from_slurm_list(output_string)
-
+  servers = ServerSet.from_slurm_list(output_string).as_list()
   pool = Pool(7)
   vals = pool.map(check_server, servers)
   return [val[0] for val in vals if val[1]]

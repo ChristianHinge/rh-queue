@@ -1,3 +1,5 @@
-The script: $script has stopped with errors
+The script has stopped with errors
+Script Location: $script
 JobId: $job_id
 Args: $args
+Node: $node

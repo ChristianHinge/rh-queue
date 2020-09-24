@@ -1,6 +1,5 @@
 import argparse
 import os
-from rhqueue.actions import ScriptNameAction
 from .scriptCreator import ScriptCreatorClass
 import sys
 from .functions import *
@@ -8,8 +7,9 @@ from .functions import *
 
 class RHQueueParser(object):
   def __init__(self, **kwargs):
-    check_open = kwargs.get("check_open", True)
+    # check_open = kwargs.get("check_open", True)
     argv = kwargs.get("argv", sys.argv[1:])
+    argv = argv.split() if isinstance(argv, str) else argv
     # Main Parser
     self.parser = argparse.ArgumentParser(description="RHQueue",
                                           add_help=False)
@@ -80,7 +80,7 @@ class RHQueueParser(object):
         """)
     parser_queue.add_argument("-b",
                               "--begin-time",
-                              type=str,
+                              type=parse_time,
                               help="Begin script after (b) seconds")
 
     parser_queue.add_argument(
@@ -103,8 +103,7 @@ class RHQueueParser(object):
                               default=False)
     parser_queue.add_argument(
         "--script-name",
-        help="The name of the script file name that is inserted into the queue",
-        action=ScriptNameAction)
+        help="The name of the script file name that is inserted into the queue")
     self.parser.add_argument("-h", action="help", help="print basic help")
     self.parser.add_argument("--help",
                              action="store_true",
@@ -137,6 +136,7 @@ class RHQueueParser(object):
       parser_info.print_help()
       exit(1)
     setattr(
-        args, "script_name", args.script_name if hasattr(args, "script_name")
-        and args.script_name else args.script if hasattr(args, "script") and args.script else "")
+        args, "script_name",
+        args.script_name if hasattr(args, "script_name") and args.script_name
+        else args.script if hasattr(args, "script") and args.script else "")
     self.args = args

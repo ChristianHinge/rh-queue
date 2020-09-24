@@ -1,2 +1,5 @@
-The script: $script has begun
+The script has begun
+Script Location: $script
+Job ID: $job_id
 Args: $args
+Node: $node

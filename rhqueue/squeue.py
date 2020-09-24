@@ -1,20 +1,17 @@
 import getpass
 import grp
 import subprocess
-from typing import Any, List
-from unittest.case import TestCase
+from typing import List
 from .datagrid import BaseDataGridLine, BaseDataGridHandler
 from .printer import GridPrinter
-from .functions import  handle_slurm_output
+from .functions import handle_slurm_output
 from .servers import ServerSet
 
 
 class SqueueDataGridHandler(BaseDataGridHandler):
   def __init__(self):
-    output = subprocess.run("squeue", stdout=subprocess.PIPE,
-                            shell=True).stdout.decode("utf-8").split("\n")[:-1]
+    super().__init__()
     self.admin = grp.getgrnam("sudo").gr_mem
-    super().__init__(output)
     self.user = getpass.getuser()
     self.data: List[SqueueDataGridLine]
 
@@ -84,21 +81,13 @@ class SqueueDataGridLine(BaseDataGridLine):
 
 class SqueueDataGridPrinter(BaseDataGridHandler):
   def __init__(self):
-    output = subprocess.run("squeue", stdout=subprocess.PIPE,
-                            shell=True).stdout.decode("utf-8").split("\n")[:-1]
-    self.admin = grp.getgrnam("sudo").gr_mem
-    super().__init__(output)
-    self.user = getpass.getuser()
+    super().__init__()
     self.data: List[SqueueDataGridLine]
 
   def _to_dataline(self, line):
     return SqueueDataGridLine(self._handle_line(line))
 
   def print_vals(self, *columns):
-    self.columns = columns
-    self.spacing = 12
-    job_ids = [i.id for i in self.data]
-
     def create_case(*keys):
       def case(job_id):
         output = subprocess.run(f"scontrol show jobs {job_id}",
@@ -109,14 +98,16 @@ class SqueueDataGridPrinter(BaseDataGridHandler):
 
       return case
 
-    get_keys = create_case("JobName", "ExcNodeList")
+    get_keys = create_case("JobName", "ExcNodeList", "NodeList")
     for line in self.data:
       keys = get_keys(line.id)
       line.script_name = keys["JobName"]
-      print(keys["ExcNodeList"])
-      line.nodelist = ServerSet.from_slurm_list(keys["ExcNodeList"]).invert
-      line.nodelist = str(",".join(list(line.nodelist)))
-    self.print_info()
+      if keys["NodeList"] == "(null)":
+        line.nodelist = ServerSet.from_slurm_list(keys["ExcNodeList"]).invert
+      else:
+        line.nodelist = ServerSet.from_slurm_list(keys["NodeList"])
+      line.nodelist = line.nodelist.to_slurm_list()
+    self.print_info(columns)
 
   def print_extra_information(self, job_id, verbosity):
     res = subprocess.run(f"scontrol show jobs {job_id}",
@@ -139,31 +130,30 @@ class SqueueDataGridPrinter(BaseDataGridHandler):
                   headers=[["Key", "Value"]],
                   title=f"Information about job:{job_id}")
 
-  def print_info(self):
+  def print_info(self, columns):
 
-    self.colmn_sort = [(idx, val) for idx, val in enumerate(self.columns)]
-    self.num_columns = len(self.columns)
-    header_string = self._get_columns(self.headers)
+    self.colmn_sort = [(idx, val) for idx, val in enumerate(columns)]
+    self.num_columns = len(columns)
+    header_string = self._get_columns(self.headers, columns)
     header_string = list(
         map(lambda x: x.replace("(REASON)", ""), header_string))
-    self.line_width = len(self.columns) * (self.spacing + 1) + 1
     running_lines = []
     waiting_lines = []
     title = "Queue Information"
     sections = ["Running Items", "Items in Queue"]
     for value in self.data:
       if value.state == "Running":
-        running_lines.append(self._get_columns(value))
+        running_lines.append(self._get_columns(value, columns))
       elif value.state == "In Queue":
-        waiting_lines.append(self._get_columns(value))
+        waiting_lines.append(self._get_columns(value, columns))
     headers = [header_string, header_string]
     data = [running_lines, waiting_lines]
     GridPrinter(data, title=title, sections=sections, headers=headers)
 
-  def _get_columns(self, line: List[str]) -> List[str]:
+  def _get_columns(self, line: List[str], columns) -> List[str]:
     ret = []
     for i, value in enumerate(line):
-      if i in self.columns:
+      if i in columns:
         ret.append(str(value))
     return list(
         map(lambda x: x[1],

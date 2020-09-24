@@ -1,3 +1,5 @@
-The script: $script has completed successfully
+The script has completed successfully
+Script Location: $script
 JobId: $job_id
 Args: $args
+Node: $node

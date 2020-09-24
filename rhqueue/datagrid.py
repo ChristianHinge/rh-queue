@@ -1,5 +1,5 @@
 from typing import List
-
+import subprocess
 class BaseDataGridLine(list):
   def __init__(self, line: List[str]) -> None:
     super().__init__(line)
@@ -12,7 +12,9 @@ class BaseDataGridLine(list):
 
 
 class BaseDataGridHandler(list):
-  def __init__(self, grid) -> None:
+  def __init__(self) -> None:
+    grid = subprocess.run("squeue", stdout=subprocess.PIPE,
+                        shell=True).stdout.decode("utf-8").split("\n")[:-1]
     self.headers = self._to_dataline(grid[0])
     self.data = []
     for line in grid[1:]:
