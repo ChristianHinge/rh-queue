@@ -22,18 +22,16 @@ class RHQueueHander:
 
   def remove(self, args):
     data = SqueueDataGridHandler()
-    data.cancel_job(args.job[0])
+    data.cancel_job(args.job)
 
   def queue(self, args):
-
-    args.script_name = args.script_name if args.script_name else args.script
-
     self.processor.add_scriptline(
         "srun -n1 {} {}".format(os.path.abspath(args.script),
                                 " ".join(args.args)), 0)
 
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
+    # print("running")
     # base sbatch arguments
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.add_sbatchline("--priority", args.priority)
@@ -50,11 +48,16 @@ class RHQueueHander:
     # Handle Email
     if args.email:
       self.processor.add_scriptline(
-          f"rhqemail start {args.email} {os.path.abspath(args.script)} {' '.join(args.args)}",
-          -5)
-      end_str = "if [[ $? -eq 0 ]]; then\n" + "  rhqemail completed {0} {1} {2}\n" + "else\n" + " rhqemail failed {0} {1} {2}\n" + "fi\n"
+          f"export SLURM_OUTPUT_FILE='{args.output_file}'", -9)
       self.processor.add_scriptline(
-          end_str.format(args.email, os.path.abspath(args.script), ' '.join(args.args)), 2)
+          f"export SLURM_SCRIPT='{os.path.abspath(args.script)}'", -8)
+      self.processor.add_scriptline(
+          f"export SLURM_SCRIPT_ARGS='{' '.join(args.args)}'", -8)
+      self.processor.add_scriptline(
+          f"export SLURM_SCRIPT_EMAIL='{args.email}'", -8)
+      self.processor.add_scriptline("rhqemail start", -5)
+      end_str = "if [[ $? -eq 0 ]]; then\n" + "  rhqemail completed\n" + "else\n" + " rhqemail failed\n" + "fi\n"
+      self.processor.add_scriptline(end_str, 2)
 
     #Handle venv
     if args.venv:
@@ -69,8 +72,9 @@ class RHQueueHander:
 
     if args.servers:
       self.processor.add_sbatchline("-x", ",".join(args.servers.invert))
+    if args.source_script:
+      self.processor.add_scriptline(f"source {args.source_script}", -20)
 
-    
     self.processor.write_file()
 
     if args.test:

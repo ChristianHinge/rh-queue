@@ -9,16 +9,8 @@ class EmailParser(object):
     parser.add_argument("action",
                         choices=["start", "completed", "failed"],
                         help="The content of the email to send")
-    parser.add_argument("email", help="email to send to")
-    parser.add_argument("script", help="The script the email is about")
-    parser.add_argument("args",
-                        help="the arguments passed to the script",
-                        nargs="*")
     args = parser.parse_args()
-    EmailSender(email=args.email,
-                action=args.action,
-                script=args.script,
-                args=args.args).send_email()
+    EmailSender(action=args.action).send_email()
 
 
 if __name__ == "__main__":

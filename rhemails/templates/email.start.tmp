@@ -1,5 +1,7 @@
 The script has begun
 Script Location: $script
+Script Name: $script_name
 Job ID: $job_id
 Args: $args
 Node: $node
+Output File: $output_file

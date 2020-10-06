@@ -1,5 +1,6 @@
 import argparse
 import os
+from rhqueue.actions import FooAction
 from .scriptCreator import ScriptCreatorClass
 import sys
 from .functions import *
@@ -7,7 +8,6 @@ from .functions import *
 
 class RHQueueParser(object):
   def __init__(self, **kwargs):
-    # check_open = kwargs.get("check_open", True)
     argv = kwargs.get("argv", sys.argv[1:])
     argv = argv.split() if isinstance(argv, str) else argv
     # Main Parser
@@ -49,6 +49,13 @@ class RHQueueParser(object):
         This is supposed to be the name of the conda environment.
       """,
                        default=os.environ.get("RHQ_CONDA_VENV", ""))
+
+    parser_queue.add_argument("--source-script",
+                              type=str,
+                              help="""
+        A script that is run before setting the virtual environment
+                              """)
+
     parser_queue.add_argument(
         "-p",
         "--priority",
@@ -103,7 +110,8 @@ class RHQueueParser(object):
                               default=False)
     parser_queue.add_argument(
         "--script-name",
-        help="The name of the script file name that is inserted into the queue")
+        help="The name of the script file name that is inserted into the queue",
+        action=FooAction)
     self.parser.add_argument("-h", action="help", help="print basic help")
     self.parser.add_argument("--help",
                              action="store_true",
@@ -111,7 +119,6 @@ class RHQueueParser(object):
     # Remove Subparser
     parser_remove = subparsers.add_parser("remove", help="remove help")
     parser_remove.add_argument("job",
-                               nargs=1,
                                help="the job id of the job to cancel",
                                type=int)
 

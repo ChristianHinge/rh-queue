@@ -115,6 +115,9 @@ class RHQueueTests(unittest.TestCase):
     script = subprocess.run(self.args("test_titan_hostname.py"))
     self.assertEqual(script.returncode, 0)
     self.assertFileContentsSame(self.o, titan)
+  
+  # def test_source_script(self):
+  #   self.
 
 
 if __name__ == "__main__":
