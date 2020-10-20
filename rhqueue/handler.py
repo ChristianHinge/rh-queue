@@ -31,7 +31,6 @@ class RHQueueHander:
 
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
-    # print("running")
     # base sbatch arguments
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.add_sbatchline("--priority", args.priority)

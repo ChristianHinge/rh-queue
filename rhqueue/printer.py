@@ -16,7 +16,7 @@ class GridPrinter(object):
     self.col_spacing = kwargs.get("col_spacing", 1)
     self.row_seperator_icon = kwargs.get("row_seperator_icon", "-")
     self.num_columns = len(self.headers[0])
-    self.col_widths = self.update_widths(self.headers+self.data)
+    self.col_widths = self.update_widths(self.headers + self.data)
     self._print_break()
     if self.title:
       self._print_centered_string(self.title)
@@ -45,14 +45,13 @@ class GridPrinter(object):
     print(self.corner_icon + f"{self.row_seperator_icon * (self.full_width)}" +
           self.corner_icon)
 
-
-  def update_widths(self,lst)->List[int]:
+  def update_widths(self, lst) -> List[int]:
     if type(lst) == list and all(isinstance(i, str) for i in lst):
       return [len(i) for i in lst]
     val = []
     for i in lst:
       val.append(self.update_widths(i))
-    if len(val) <2:
+    if len(val) < 2:
       val.append([])
     val = list(zip_longest(*val, fillvalue=0))
     return [max(*i) for i in val]
@@ -71,7 +70,6 @@ class GridPrinter(object):
     string = bcolors.color_full_text(color, string.center(self.full_width))
     print(self.col_seperator_icon + string + self.col_seperator_icon)
     self._print_break()
-
 
   @property
   def full_width(self):
