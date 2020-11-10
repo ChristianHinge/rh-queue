@@ -9,9 +9,6 @@ class RHQueueParserTester(unittest.TestCase):
       return " ".join(lst)
     return lst
 
-  def setUp(self):
-    self.open_titans = get_open_servers("titan[1-7]")
-
   def get_args(self, *arg_vals, **kwargs):
 
     cmd = kwargs.get("cmd", "queue")
@@ -29,34 +26,43 @@ class RHQueueParserTester(unittest.TestCase):
         args.append(f"--{i[0].replace('_', '-')}")
         args.append(f"{self.list_to_args_string(i[1])}")
     args.append(" ".join(arg_vals))
-    # print(" ".join(args))
     return RHQueueParser(argv=" ".join(args)).args
 
   def test_queue_specific_titan(self):
     self.t = "titan1"
     res = self.get_args(s=self.t)
-    self.assertEqual(["titan1"], res.servers.as_list())
+    self.assertEqual(res.servers.as_list(), ["titan1"])
+
+  def test_queue_multiple_no_bracket_titan(self):
+    self.t = "titan1,titan2"
+    res = self.get_args(s=self.t)
+    self.assertEqual(res.servers.as_list(), ["titan1", "titan2"])
+
+  def test_queue_no_duplicates(self):
+    self.t = "titan1,titan1"
+    res = self.get_args(s=self.t)
+    self.assertEqual(res.servers.as_list(), ["titan1"])
 
   def test_queue_titan_list(self):
     titan = "titan[1,2]"
     res = self.get_args(s=titan)
-    self.assertEqual(["titan1", "titan2"], res.servers.as_list())
+    self.assertEqual(res.servers.as_list(), ["titan1", "titan2"])
 
   def test_queue_titan_list_seperate(self):
     titan = "titan[1,3]"
     res = self.get_args(s=titan)
-    self.assertEqual(["titan1", "titan3"], res.servers.as_list())
+    self.assertEqual(res.servers.as_list(), ["titan1", "titan3"])
 
   def test_queue_titan_range(self):
     titans = "titan[1-3]"
     res = self.get_args(s=titans)
-    self.assertEqual(["titan1", "titan2", "titan3"], res.servers.as_list())
+    self.assertEqual(res.servers.as_list(), ["titan1", "titan2", "titan3"])
 
   def test_queue_titan_multiple_with_range(self):
     titans = "titan[1-3,4]"
     res = self.get_args(s=titans)
-    self.assertEqual(["titan1", "titan2", "titan3", "titan4"],
-                     res.servers.as_list())
+    self.assertEqual(res.servers.as_list(),
+                     ["titan1", "titan2", "titan3", "titan4"])
 
   def test_queue_titan_exclude_list(self):
     titans = "titan[1-3]"
@@ -64,54 +70,131 @@ class RHQueueParserTester(unittest.TestCase):
     self.assertEqual(res.servers.invert.as_list(),
                      ["titan4", "titan5", "titan7"])
 
+  def test_queue_titan_range_single_range(self):
+    titans = "titan[1-3,4,5-7]"
+    res = self.get_args(s=titans)
+    self.assertEqual(
+        res.servers.as_list(),
+        ["titan1", "titan2", "titan3", "titan4", "titan5", "titan6", "titan7"])
+
+  def test_queue_multiple_server_domains(self):
+    titans = "titan[1],ibm1"
+    res = self.get_args(s=titans)
+    self.assertEqual(res.servers.as_list(), ["ibm1", "titan1"])
+
+  def test_queue_multiple_server_domains_multiple(self):
+    titans = "titan[1-2],ibm[1-2]"
+    res = self.get_args(s=titans)
+    self.assertEqual(res.servers.as_list(),
+                     ["ibm1", "ibm2", "titan1", "titan2"])
+
   def test_queue_script_name(self):
     script_name = "test1"
     res = self.get_args(script_name=script_name)
-    self.assertEqual(script_name, res.script_name)
+    self.assertEqual(res.script_name, script_name)
+
+  def test_queue_script_name_no_arg(self):
+    res = self.get_args()
+    self.assertEqual(res.script_name, "test_venv.py")
 
   def test_queue_venv_base(self):
     res = self.get_args()
-    self.assertEqual("test_venv.py", res.script_name)
+    self.assertEqual(res.script_name, "test_venv.py")
 
   def test_queue_venv_environ(self):
-    os.environ["RHQ_VENV"] = "/homes/pmcd/venv/test-slurm"
+    os.environ["RHQ_ENV"] = "/homes/pmcd/venv/test-slurm"
     res = self.get_args()
-    self.assertEqual("/homes/pmcd/venv/test-slurm", res.venv)
+    self.assertEqual(res.venv, "/homes/pmcd/venv/test-slurm")
+    del os.environ["RHQ_ENV"]
 
   def test_queue_venv_virtual_env(self):
     os.environ["VIRTUAL_ENV"] = "/homes/pmcd/venv/test-slurm"
     res = self.get_args()
-    self.assertEqual(os.environ["VIRTUAL_ENV"], res.venv)
+    del os.environ["VIRTUAL_ENV"]
+    self.assertEqual(res.venv, "/homes/pmcd/venv/test-slurm")
 
   def test_queue_venv_priority_environ(self):
-    os.environ["RHQ_VENV"] = "/homes/pmcd/venv/test-slurm"
-    venv = "/homes/pmcd/venv/django-venv"
-    res = self.get_args(venv=venv)
-    self.assertEqual(venv, res.venv)
+    os.environ["RHQ_ENV"] = "/homes/pmcd/venv/test-slurm"
+    true_venv = "/homes/pmcd/venv/django-venv"
+    res = self.get_args(venv=true_venv)
+    del os.environ["RHQ_ENV"]
+    self.assertEqual(res.venv, true_venv)
 
   def test_queue_venv_priority_virtual_env(self):
     os.environ["VIRTUAL_ENV"] = "/homes/pmcd/venv/test-slurm"
     venv = "/homes/pmcd/venv/django-venv"
     res = self.get_args(venv=venv)
-    self.assertEqual(venv, res.venv)
+    del os.environ["VIRTUAL_ENV"]
+    self.assertEqual(res.venv, venv)
 
   def test_queue_venv_priority_virtual_env_environ(self):
-    os.environ["RHQ_VENV"] = "RHQ"
+    os.environ["RHQ_ENV"] = "RHQ"
     os.environ["VIRTUAL_ENV"] = "VIR_ENV"
     res = self.get_args()
-    self.assertEqual(os.environ["VIRTUAL_ENV"], res.venv)
+    del os.environ["VIRTUAL_ENV"]
+    del os.environ["RHQ_ENV"]
+    self.assertEqual(res.venv, "VIR_ENV")
 
   def test_queue_venv_priority_all(self):
-    os.environ["RHQ_VENV"] = "RHQ"
+    os.environ["RHQ_ENV"] = "RHQ"
     os.environ["VIRTUAL_ENV"] = "VIR_ENV"
     venv = "VENV"
     res = self.get_args(venv=venv)
-    self.assertEqual(venv, res.venv)
+    del os.environ["VIRTUAL_ENV"]
+    del os.environ["RHQ_ENV"]
+    self.assertEqual(res.venv, venv)
+
+  def test_queue_conda_venv_rhq(self):
+    os.environ["RHQ_ENV"] = "test-conda"
+    res = self.get_args()
+    del os.environ["RHQ_ENV"]
+    self.assertEqual(res.condaVenv, "test-conda")
+
+  def test_queue_conda_venv_environ(self):
+    os.environ["CONDA_DEFAULT_ENV"] = "test-conda"
+    res = self.get_args()
+    del os.environ["CONDA_DEFAULT_ENV"]
+    self.assertEqual(res.condaVenv, "test-conda")
+
+  def test_queue_conda_venv_arg(self):
+    venv = "conda-venv"
+    res = self.get_args(c=venv)
+    self.assertEqual(res.condaVenv, venv)
+
+  def test_queue_conda_venv_arg_over_environ(self):
+    conda_venv = "test-conda"
+    os.environ["CONDA_DEFAULT_ENV"] = conda_venv
+    res = self.get_args()
+    del os.environ["CONDA_DEFAULT_ENV"]
+    self.assertEqual(res.condaVenv, conda_venv)
+
+  def test_queue_conda_venv_environ_over_rhq(self):
+    os.environ["RHQ_ENV"] = "RHQ"
+    os.environ["CONDA_DEFAULT_ENV"] = "CDE"
+    res = self.get_args()
+    del os.environ["CONDA_DEFAULT_ENV"]
+    del os.environ["RHQ_ENV"]
+    self.assertEqual("CDE", res.condaVenv)
+    self.assertEqual(res.venv, None)
 
   def test_queue_args(self):
     args = "a b c".split(" ")
     res = self.get_args(a=args)
     self.assertEqual(res.args, ["a", "b", "c"])
+
+  def test_queue_args_single(self):
+    args = "1"
+    res = self.get_args(a=args)
+    self.assertEqual(res.args, ["1"])
+
+  def test_queue_args_no_args(self):
+    res = self.get_args()
+    self.assertEqual(res.args, [])
+
+  # def test_queue_args_empty_args(self):
+  #   args = ""
+  #   res = self.get_args(a=args)
+  #   self.asserrai(res.args, [])
 
   def test_queue_begin_time_seconds(self):
     begin_time = "10s"
@@ -152,6 +235,7 @@ class RHQueueParserTester(unittest.TestCase):
     os.environ["RHQ_EMAIL"] = "pmc@regionh.dk"
     res = self.get_args(e="pmc1@regionh.dk")
     self.assertEqual(res.email, "pmc1@regionh.dk")
+    del os.environ["RHQ_EMAIL"]
 
   def test_queue_priority(self):
     prio = "3"
@@ -180,26 +264,25 @@ class RHQueueParserTester(unittest.TestCase):
     job = "1234"
     res = self.get_args(job, cmd="remove")
     self.assertEqual(res.job, int(job))
-   
+
   def test_info_default(self):
     res = self.get_args(cmd="info")
-    self.assertEqual(res.verbosity, 1) 
-    
+    self.assertEqual(res.verbosity, 1)
+
   def test_info_job_id(self):
     job_id = "1234"
     res = self.get_args(cmd="info", job_id=job_id)
     self.assertEqual(res.job_id, job_id)
-    
+
   def test_info_verbosity(self):
     verbosity = "2"
     res = self.get_args(cmd="info", verbosity=verbosity)
     self.assertEqual(res.verbosity, int(verbosity))
-    
+
   def test_queue_source_script(self):
     script = "/homes/volerous/script"
     res = self.get_args(source_script=script)
     self.assertEqual(res.source_script, script)
-  
 
 
 if __name__ == "__main__":
