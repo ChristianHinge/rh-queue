@@ -49,12 +49,47 @@ class SqueueDataGridLine(BaseDataGridLine):
     super().__init__(line)
     self._data = line
     self.partition = line[1]
-    self.script_name = line[2]
+    self._script_name = None
     self.user = line[3]
     self._state = line[4]
     self.time = line[5]
     self.nodes = line[6]
-    self.nodelist = line[7]
+    self._nodelist = None
+    self._info = None
+  
+  
+  @property
+  def script_name(self):
+    if self._script_name is None:
+      if self.info is None:
+        self._script_name = self._data[2]
+      else:
+        self._script_name = self.info["JobName"]
+    return self._script_name
+  @property
+  def nodelist(self):
+    if self.info is None:
+      return self._data[7]
+    if self._nodelist is None:
+      if self.info["NodeList"] == "(null)":
+        val = ServerSet.from_slurm_list(self.info["ExcNodeList"]).invert
+      else:
+        val = ServerSet.from_slurm_list(self.info["NodeList"])
+      self._nodelist = val.to_slurm_list()
+    return self._nodelist
+  
+  @property
+  def info(self):
+    if self._info is None and isinstance(self.id, int):
+      self._info = self.get_job_by_id(self.id)
+    return self._info
+      
+  def get_job_by_id(self, job_id):
+    output = subprocess.run(f"scontrol show jobs {job_id}",
+                            shell=True,
+                            stdout=subprocess.PIPE).stdout.decode("utf-8")
+    ret = handle_slurm_output(output)
+    return ret
 
   @property
   def state(self):
@@ -82,27 +117,12 @@ class SqueueDataGridPrinter(BaseDataGridHandler):
   def _to_dataline(self, line):
     return SqueueDataGridLine(self._handle_line(line))
 
-  def print_vals(self, job_id=None, verbosity=None, columns=[]):
-    def create_case(*keys):
-      def case(job_id):
-        output = subprocess.run(f"scontrol show jobs {job_id}",
-                                shell=True,
-                                stdout=subprocess.PIPE).stdout.decode("utf-8")
-        ret = handle_slurm_output(output)
-        return dict(filter(lambda x: x[0] in keys, ret.items()))
 
-      return case
+
+  def print_vals(self, job_id=None, verbosity=None, columns=[]):
+
 
     if columns:
-      get_keys = create_case("JobName", "ExcNodeList", "NodeList")
-      for line in self.data:
-        keys = get_keys(line.id)
-        line.script_name = keys["JobName"]
-        if keys["NodeList"] == "(null)":
-          line.nodelist = ServerSet.from_slurm_list(keys["ExcNodeList"]).invert
-        else:
-          line.nodelist = ServerSet.from_slurm_list(keys["NodeList"])
-        line.nodelist = line.nodelist.to_slurm_list()
       self.print_info(columns)
     else:
       res = subprocess.run(f"scontrol show jobs {job_id}",
