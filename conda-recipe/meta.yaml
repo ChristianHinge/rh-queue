@@ -1,6 +1,6 @@
 package:
   name: "rhqueue"
-  version: "0.3"
+  version: "0.7"
 requirements:
   build:
     - python

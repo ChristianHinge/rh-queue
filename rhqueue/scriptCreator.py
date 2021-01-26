@@ -1,4 +1,3 @@
-
 class ScriptLine(object):
   def __init__(self, arg_value, order):
     super().__init__()
@@ -61,7 +60,8 @@ class ScriptCreatorClass(object):
     sbatch_str = "#SBATCH " + " ".join(map(self._create_line,
                                            self.sbatch_args)) + "\n"
     script = sbatch_str + "\n".join(map(self._create_line, self.args))
-    return "#!/bin/bash\n" + script
+    
+    return "#!/bin/bash\n"  + script
 
   def add_scriptline(self, arg_value, order):
     self.args.append(ScriptLine(arg_value, order))

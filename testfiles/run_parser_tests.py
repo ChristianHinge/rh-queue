@@ -220,6 +220,16 @@ class RHQueueParserTester(unittest.TestCase):
     b = "1d1h1m1s"
     res = self.get_args(b=b)
     self.assertEqual(res.begin_time, 24 * 3600 + 3600 + 61)
+    
+  def test_queue_begin_time_combined_multiple_digit(self):
+    b = "11d1h1m1s"
+    res = self.get_args(b=b)
+    self.assertEqual(res.begin_time, (24 * 11) * 3600 + 3600 + 61)
+
+  def test_queue_begin_time_combined_multiple_digit_1(self):
+    b = "11d20h0m10s"
+    res = self.get_args(b=b)
+    self.assertEqual(res.begin_time, (24 * 11) * 3600 + 20 * 3600 + 10)
 
   def test_queue_email_cmd_line(self):
     email = "pmc@regionh.dk"

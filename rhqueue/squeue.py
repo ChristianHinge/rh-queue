@@ -82,7 +82,7 @@ class SqueueDataGridPrinter(BaseDataGridHandler):
   def _to_dataline(self, line):
     return SqueueDataGridLine(self._handle_line(line))
 
-  def print_vals(self, *columns):
+  def print_vals(self, job_id=None, verbosity=None, columns=[]):
     def create_case(*keys):
       def case(job_id):
         output = subprocess.run(f"scontrol show jobs {job_id}",
@@ -93,37 +93,40 @@ class SqueueDataGridPrinter(BaseDataGridHandler):
 
       return case
 
-    get_keys = create_case("JobName", "ExcNodeList", "NodeList")
-    for line in self.data:
-      keys = get_keys(line.id)
-      line.script_name = keys["JobName"]
-      if keys["NodeList"] == "(null)":
-        line.nodelist = ServerSet.from_slurm_list(keys["ExcNodeList"]).invert
-      else:
-        line.nodelist = ServerSet.from_slurm_list(keys["NodeList"])
-      line.nodelist = line.nodelist.to_slurm_list()
-    self.print_info(columns)
-
-  def print_extra_information(self, job_id, verbosity):
-    res = subprocess.run(f"scontrol show jobs {job_id}",
-                         shell=True,
-                         stdout=subprocess.PIPE)
-    if res.returncode != 0:
-      print("there was a problem getting the job")
+    if columns:
+      get_keys = create_case("JobName", "ExcNodeList", "NodeList")
+      for line in self.data:
+        keys = get_keys(line.id)
+        line.script_name = keys["JobName"]
+        if keys["NodeList"] == "(null)":
+          line.nodelist = ServerSet.from_slurm_list(keys["ExcNodeList"]).invert
+        else:
+          line.nodelist = ServerSet.from_slurm_list(keys["NodeList"])
+        line.nodelist = line.nodelist.to_slurm_list()
+      self.print_info(columns)
     else:
-      keys = [[
-          "EligibleTime", "SubmitTime", "StartTime", "ExcNodeList", "JobId",
-          "JobName", "JobState", "StdOut", "UserId", "WorkDir", "NodesList"
-      ]]
-      verbosity_keys = [j for (idx, val) in enumerate(keys) for j in val]
-      output = handle_slurm_output(res.stdout.decode("utf-8"))
-      verbosity_dict = {
-          i: output[i]
-          for i in output.keys() if i in verbosity_keys
-      } if verbosity < 2 else output
-      GridPrinter([sorted(list(verbosity_dict.items()), key=lambda x: x[0])],
-                  headers=[["Key", "Value"]],
-                  title=f"Information about job:{job_id}")
+      res = subprocess.run(f"scontrol show jobs {job_id}",
+                           shell=True,
+                           stdout=subprocess.PIPE)
+      if res.returncode != 0:
+        print("there was a problem getting the job")
+      else:
+        keys = [
+            "EligibleTime", "SubmitTime", "StartTime", "ExcNodeList", "JobId",
+            "JobName", "JobState", "StdOut", "UserId", "WorkDir", "NodesList"
+        ]
+        output = handle_slurm_output(res.stdout.decode("utf-8"))
+
+        if verbosity < 2:
+          verbosity_dict = {i: output[i] for i in output.keys() if i in keys}
+        else:
+          verbosity_dict = output
+        GridPrinter([
+            sorted([list(j) for j in verbosity_dict.items()],
+                   key=lambda x: x[0])
+        ],
+                    headers=[["Key", "Value"]],
+                    title=f"Information about job:{job_id}")
 
   def print_info(self, columns):
 

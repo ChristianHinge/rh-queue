@@ -5,6 +5,4 @@ class FooAction(argparse.Action):
           raise ValueError("nargs not allowed")
       super(FooAction, self).__init__(option_strings, dest, **kwargs)
   def __call__(self, parser, namespace, values, option_string=None):
-    #   print('%r %r %r' % (namespace, values, option_string))
-    #   print(self.dest)
       setattr(namespace, self.dest, values)

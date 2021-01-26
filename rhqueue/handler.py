@@ -3,6 +3,7 @@ import os
 from .scriptCreator import ScriptCreatorClass
 from .squeue import *
 from .functions import *
+import sys
 
 
 class RHQueueHander:
@@ -24,14 +25,32 @@ class RHQueueHander:
     data = SqueueDataGridHandler()
     data.cancel_job(args.job)
 
+  def check_shebang(self, file_path):
+    out = subprocess.run(f"head -1 {file_path}",
+                         shell=True,
+                         stdout=subprocess.PIPE)
+    shebang = out.stdout.decode("utf-8").strip("\n")
+    if "#!" not in shebang:
+      print("there is no shebang defined a recommended shebang is:\n" +
+            "\"#!/usr/bin/env python3\"")
+      exit(3)
+    if not "#!/usr/bin/env python3" == shebang:
+      print("The recommened shebang is:\n" +
+            "\"#!/usr/bin/env python3\"")
+      exit(3)
+
   def queue(self, args):
+    self.check_shebang(args.script)
+    self.processor.add_scriptline(f"echo '{sys.argv}'", -16)
+    self.processor.add_scriptline(f"head -1 {args.script}", -15)
+    self.processor.add_scriptline("printenv", -14)
     self.processor.add_scriptline(
         "srun -n1 {} {}".format(os.path.abspath(args.script),
                                 " ".join(args.args)), 0)
-
     self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
     # base sbatch arguments
+
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
     self.processor.add_sbatchline("--priority", args.priority)
     self.processor.add_sbatchline("--ntasks", "1")
@@ -55,7 +74,8 @@ class RHQueueHander:
       self.processor.add_scriptline(
           f"export SLURM_SCRIPT_EMAIL='{args.email}'", -8)
       self.processor.add_scriptline("rhqemail start", -5)
-      end_str = "if [[ $? -eq 0 ]]; then\n" + "  rhqemail completed\n" + "else\n" + " rhqemail failed\n" + "fi\n"
+      end_str = ("if [[ $? -eq 0 ]]; then\n" + "  rhqemail completed\n" +
+                 "else\n" + " rhqemail failed\n" + "fi\n")
       self.processor.add_scriptline(end_str, 2)
 
     #Handle venv
@@ -64,9 +84,10 @@ class RHQueueHander:
                                     -1)
       self.processor.add_scriptline("deactivate", 1)
 
-    if args.conda_venv:
-      self.processor.add_scriptline(
-          "conda activate {}".format(args.conda_venv), -1)
+    if args.condaVenv:
+      self.processor.add_scriptline("source ~/.bashrc", -20)
+      self.processor.add_scriptline("conda activate {}".format(args.condaVenv),
+                                    -1)
       self.processor.add_scriptline("conda deactivate", 1)
 
     if args.servers:
@@ -91,6 +112,6 @@ class RHQueueHander:
   def info(self, args):
     info = SqueueDataGridPrinter()
     if args.job_id:
-      info.print_extra_information(args.job_id, args.verbosity)
+      info.print_vals(job_id =args.job_id, verbosity=args.verbosity)
     else:
-      info.print_vals(0, 3, 2, 5, 7)
+      info.print_vals(columns=[0, 3, 2, 5, 7])

@@ -46,7 +46,7 @@ class GridPrinter(object):
           self.corner_icon)
 
   def update_widths(self, lst) -> List[int]:
-    if type(lst) == list and all(isinstance(i, str) for i in lst):
+    if isinstance(lst, list) and all(isinstance(i, str) for i in lst):
       return [len(i) for i in lst]
     val = []
     for i in lst:

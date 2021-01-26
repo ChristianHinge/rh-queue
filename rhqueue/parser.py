@@ -1,7 +1,6 @@
 import argparse
 import os
 from rhqueue.actions import FooAction
-from .scriptCreator import ScriptCreatorClass
 import sys
 from .functions import *
 
@@ -29,26 +28,27 @@ class RHQueueParser(object):
           Where <python_version> is the version of python needed, python(for 2.7) or python3
         """)
     # venv defaults
-    venv = os.environ.get("RHQ_VENV", "")
-    venv = os.environ.get("VIRTUAL_ENV", venv)
     group.add_argument("-v",
                        "--venv",
-                       metavar="venv",
+                       dest="venv",
                        type=str,
                        help="""
           The virtual environment used for the project. 
           The value is the absolute path to the virtual environment directoy
         """,
-                       default=venv)
+                       nargs="?",
+                       default=None)
+
     group.add_argument("-c",
                        "--conda-venv",
-                       metavar="condaVenv",
+                       dest="condaVenv",
                        type=str,
                        help="""
         The environment for conda. 
         This is supposed to be the name of the conda environment.
       """,
-                       default=os.environ.get("RHQ_CONDA_VENV", ""))
+                       nargs="?",
+                       default=None)
 
     parser_queue.add_argument("--source-script",
                               type=str,
@@ -95,6 +95,7 @@ class RHQueueParser(object):
         "--servers",
         type=ServerSet.from_slurm_list,
         help="Define the servers that the script can run on.")
+    
     parser_queue.add_argument("-a",
                               "--args",
                               help="""
@@ -132,7 +133,19 @@ class RHQueueParser(object):
                              choices=[1, 2],
                              default=1)
     args = self.parser.parse_args(argv)
-
+    
+    if args.command=="queue" and not (args.venv or args.condaVenv):
+      if os.environ.get("CONDA_DEFAULT_ENV", ""):
+        args.condaVenv = os.environ.get("CONDA_DEFAULT_ENV", "")
+      elif os.environ.get("VIRTUAL_ENV", ""):
+        args.venv = os.environ.get("VIRTUAL_ENV", "")
+      else:
+        rhq_value = os.environ.get("RHQ_ENV", "")
+        if "/" in rhq_value:
+          args.venv = rhq_value
+        else:
+          args.condaVenv = rhq_value
+          
     if args.help:
       self.parser.print_help()
       print("Queue sub-command")
