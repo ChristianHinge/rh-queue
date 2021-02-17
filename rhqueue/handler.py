@@ -34,12 +34,13 @@ class RHQueueHander:
       print("there is no shebang defined a recommended shebang is:\n" +
             "\"#!/usr/bin/env python3\"")
       exit(3)
-    if not "#!/usr/bin/env python3" == shebang:
+    if not "#!/usr/bin/env python3" in shebang:
       print("The recommened shebang is:\n" +
             "\"#!/usr/bin/env python3\"")
       exit(3)
 
   def queue(self, args):
+    
     self.check_shebang(args.script)
     self.processor.add_scriptline(f"echo '{sys.argv}'", -16)
     self.processor.add_scriptline(f"head -1 {args.script}", -15)
@@ -104,8 +105,8 @@ class RHQueueHander:
                       stdout=subprocess.PIPE,
                       shell=True)
       res = subprocess.run(self.processor.get_script_command_line(),
-                           stdout=subprocess.PIPE,
-                           shell=True)
+                            stdout=subprocess.PIPE,
+                            shell=True)
       subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
       exit(res.returncode)
 

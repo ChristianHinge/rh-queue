@@ -76,39 +76,6 @@ Test munge setup:
 
     munge -n | unmunge
     munge -n | ssh somehost unmunge
-ControlMachine=caai1
-
-MpiDefault=none
-ProctrackType=proctrack/pgid
-ReturnToService=1
-SlurmctldPidFile=/var/run/slurm-llnl/slurmctld.pid
-SlurmdPidFile=/var/run/slurm-llnl/slurmd.pid
-SlurmdSpoolDir=/var/spool/slurmd
-SlurmUser=slurm
-StateSaveLocation=/var/spool/slurm-llnl
-SwitchType=switch/none
-TaskPlugin=task/affinity
-
-# SCHEDULING
-SchedulerType=sched/backfill
-SelectType=select/cons_res
-SelectTypeParameters=CR_Core
-
-# LOGGING AND ACCOUNTING
-AccountingStorageType=accounting_storage/none
-ClusterName=cluster
-JobAcctGatherType=jobacct_gather/none
-
-# COMPUTE NODES
-GresTypes=gpu
-NodeName=DEFAULT Gres=gpu:titan:1
-NodeName=titan1 NodeAddr=172.16.78.179 CPUs=8 RealMemory=32066 CoresPerSocket=4 ThreadsPerCore=2
-#NodeName=titan2 NodeAddr=titan2.petnet.rh.dk Gres=gpu:titan:1 CPUs=48 Boards=1 SocketsPerBoard=2 CoresPerSocket=12 ThreadsPerCore=2 RealMemory=128554
-NodeName=titan3 NodeAddr=172.16.78.156 CPUs=4 Boards=1 SocketsPerBoard=1 CoresPerSocket=4 ThreadsPerCore=1 RealMemory=32067
-NodeName=titan4 NodeAddr=172.16.78.180 CPUs=8 Boards=1 SocketsPerBoard=2 CoresPerSocket=4 ThreadsPerCore=1 RealMemory=15954
-NodeName=titan5 NodeAddr=172.16.78.184 CPUs=8 RealMemory=31821 CoresPerSocket=4 ThreadsPerCore=2
-NodeName=titan7 NodeAddr=172.16.78.188 CPUs=8 Boards=1 SocketsPerBoard=1 CoresPerSocket=4 ThreadsPerCore=2 RealMemory=31819
-PartitionName=main Nodes=titan[1,3,4,5,7] Default=YES MaxTime=INFINITE State=UP
 
 The server is now setup
 

@@ -66,6 +66,7 @@ class SqueueDataGridLine(BaseDataGridLine):
       else:
         self._script_name = self.info["JobName"]
     return self._script_name
+  
   @property
   def nodelist(self):
     if self.info is None:
@@ -93,7 +94,7 @@ class SqueueDataGridLine(BaseDataGridLine):
 
   @property
   def state(self):
-    return {"R": "Running", "PD": "In Queue", "ST": "State"}[self._state]
+    return {"R": "Running", "PD": "In Queue", "ST": "State", "CG": "Completing"}[self._state]
 
   def __getitem__(self, s: int):
     if s == 4:
