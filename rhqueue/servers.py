@@ -3,10 +3,10 @@ import subprocess
 import itertools
 
 
-def handle_dash(dash_str: str):
-  start_stop = list(map(int, dash_str.split("-")))
-  start_stop[1] += 1
-  return list(range(*start_stop))
+# def handle_dash(dash_str: str):
+#   start_stop = list(map(int, dash_str.split("-")))
+#   start_stop[1] += 1
+#   return list(range(*start_stop))
 
 
 def get_servers():
