@@ -2,7 +2,6 @@
 ## Install
 - clone repo
 - cd into/repo
-- run `pip install --no-cache .`
 
 # To install with conda
 - clone repo

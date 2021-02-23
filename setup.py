@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 # print(find_packages())
 setup(name="rhqueue",
-      version="1.0",
+      version="1.1",
       description="rh queue system for queueing scripts",
       author="Peter McDaniel",
       author_email="peter.nicolas.castenschiold.mcdaniel@regionh.dk",

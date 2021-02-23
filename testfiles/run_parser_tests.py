@@ -68,7 +68,7 @@ class RHQueueParserTester(unittest.TestCase):
     titans = "titan[1-3]"
     res = self.get_args(s=titans)
     self.assertEqual(res.servers.invert.as_list(),
-                     ["titan4", "titan5", "titan7"])
+                     ["titan4", "titan5"])
 
   def test_queue_titan_range_single_range(self):
     titans = "titan[1-3,4,5-7]"
