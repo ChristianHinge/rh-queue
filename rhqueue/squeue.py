@@ -14,18 +14,14 @@ class SqueueDataGridHandler(DataGridHandler):
     self.admin = grp.getgrnam("sudo").gr_mem
     self.user = getpass.getuser()
 
-  def is_users_job(self, job_id):
-    return any(
-        (line.user == self.user) for line in self.data if line.id == job_id)
-
   @property
-  def is_admin(self):
+  def is_user_admin(self):
     return self.user in self.admin
 
   def cancel_job(self, job_id):
-    if self.is_users_job(job_id):
+    if self.is_user_job(self.user, job_id):
       subprocess.call(["scancel {}".format(job_id)], shell=True)
-    elif self.is_admin:
+    elif self.is_user_admin:
       subprocess.call(["sudo -u slurm scancel {}".format(job_id)], shell=True)
     else:
       print("You do not have the permission to cancel that job")

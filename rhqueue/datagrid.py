@@ -12,8 +12,9 @@ class DataGridLine(list):
       self.id = int(line[0])
     except:
       self.id = None
-    self._script_name = None
+    self.user = line[3]
     self._state = line[4]
+    self._script_name = None
     self._nodelist = None
     self._info = None
 
@@ -97,3 +98,9 @@ class DataGridHandler(list):
 
   def _to_dataline(self, line):
     return DataGridLine(self._handle_line(line))
+
+  def get_user_jobs(self, user):
+    return [line for line in self.data if line.user == user]
+
+  def is_user_job(self, user, job_id):
+    return job_id in [line.id for line in self.get_user_jobs(user)]

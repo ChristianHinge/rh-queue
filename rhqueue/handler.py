@@ -107,6 +107,7 @@ class RHQueueHander:
                            stdout=subprocess.PIPE,
                            shell=True)
       subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
+      print(res.stdout.decode("utf-8")[:-1])
       exit(res.returncode)
 
   def info(self, args):

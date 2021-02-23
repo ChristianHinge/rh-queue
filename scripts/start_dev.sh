@@ -9,8 +9,17 @@ rhqinstall() {
 }
 rhqtest() {
   cd ~/rh-queue/testfiles
-  for var in "$@"
-  do
+  deactivate
+  for var in "$@"; do
     python3 "run_${var}_tests.py"
   done
+  rhqstart
+}
+rhqstart() {
+  source ~/venv/rhqueue/bin/activate
+  cd ~/rh-queue
+  pip3 install -e .
+}
+rhqstop() {
+  deactivate
 }
