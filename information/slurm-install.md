@@ -29,14 +29,6 @@ ensure `$id slurm` is
 
     uid=64030(slurm) gid=64030(slurm) groups=64030(slurm),0(root),27(sudo)
 
-Add the user to the service file
-
-    sudo vim /lib/systemd/system/slurmd.service
-
-Add to file under `[Service]`
-
-    User=slurm
-
 
 Start and enable the slurm manager on boot (Controller Node)
     
@@ -56,8 +48,6 @@ Add new info to all slurm conf files
 
 update gres files
 
-cups are the number of cores
-
 copy slurm.conf and gres.conf:
 
     sudo cp slurm.conf /etc/slurm-llnl
@@ -65,6 +55,12 @@ copy slurm.conf and gres.conf:
 
 setup munge:
 
+    sudo mkdir /opt/munge
+    sudo chown -R pmcd:pmcd /opt/munge
+    cp ./munge.key /opt/munge/
+    sudo chown -R root:root /opt/munge
+    sudo cp /opt/munge/munge.key /etc/munge/munge.key
+    sudo rm -rf /opt/munge/
     sudo chown munge: /etc/munge/munge.key
     sudo chmod 400 /etc/munge/munge.key
     sudo chown -R munge: /etc/munge/ /var/log/munge/
@@ -75,7 +71,8 @@ setup munge:
 Test munge setup:
 
     munge -n | unmunge
-    munge -n | ssh somehost unmunge
+    munge -n | ssh titan1.petnet.rh.dk unmunge
+    munge -n | ssh caai1.petnet.rh.dk unmunge
 
 The server is now setup
 

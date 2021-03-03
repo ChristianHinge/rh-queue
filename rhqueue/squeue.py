@@ -45,7 +45,7 @@ class SqueueDataGridPrinter(DataGridHandler):
             "EligibleTime", "SubmitTime", "StartTime", "ExcNodeList", "JobId",
             "JobName", "JobState", "StdOut", "UserId", "WorkDir", "NodesList"
         ]
-        output = handle_slurm_output(res.stdout.decode("utf-8"))
+        output = self.from_id(job_id).get_from_keys(keys)
         if verbosity < 2:
           verbosity_dict = {i: output[i] for i in output.keys() if i in keys}
         else:
@@ -59,26 +59,17 @@ class SqueueDataGridPrinter(DataGridHandler):
 
   def print_info(self, columns):
     self.colmn_sort = [(idx, val) for idx, val in enumerate(columns)]
-    headers = self._get_columns(self.headers, columns)
-    headers = list(
-        map(lambda x: x.replace("(REASON)", ""), headers))
     data = [[], []]
     for value in self.data:
-      if value.state == "Running":
+      if value.is_running:
         data[0].append(self._get_columns(value, columns))
-      elif value.state == "In Queue":
+      elif value.is_queued:
         data[1].append(self._get_columns(value, columns))
-    headers = [headers] * len(data)
+    headers = [columns] * len(data)
     GridPrinter(data,
                 title="Queue Information",
                 sections=["Running Items", "Items in Queue"],
                 headers=headers)
 
-  def _get_columns(self, line: List[str], columns) -> List[str]:
-    ret = []
-    for i, value in enumerate(line):
-      if i in columns:
-        ret.append(str(value))
-    return list(
-        map(lambda x: x[1],
-            sorted((self.colmn_sort[i][1], ret[i]) for i in range(len(ret)))))
+  def _get_columns(self, line: DataGridLine, columns) -> List[str]:
+    return list(line.get_from_keys(columns).values())

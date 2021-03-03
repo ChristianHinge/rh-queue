@@ -59,11 +59,11 @@ class RHQueueParser(object):
     parser_queue.add_argument(
         "-p",
         "--priority",
-        type=str,
-        choices=["1", "2", "3", "4", "5"],
-        default="3",
-        help="The priority of the script" +
-        "\nDO NOT DEFINE UNLESS YOU ARE SURE THAT YOU DO NOT NEED HIGHER PRIORITY."
+        type=int,
+        choices=[1, 2, 3, 4, 5],
+        default=3,
+        help="The priority of the script\n" +
+        "Default is 3, rhqueue info shows the order of the scripts in the queue"
     )
 
     parser_queue.add_argument("-e",
@@ -95,7 +95,7 @@ class RHQueueParser(object):
         "--servers",
         type=ServerSet.from_slurm_list,
         help="Define the servers that the script can run on.")
-    
+
     parser_queue.add_argument("-a",
                               "--args",
                               help="""
@@ -133,8 +133,8 @@ class RHQueueParser(object):
                              choices=[1, 2],
                              default=1)
     args = self.parser.parse_args(argv)
-    
-    if args.command=="queue" and not (args.venv or args.condaVenv):
+
+    if args.command == "queue" and not (args.venv or args.condaVenv):
       if os.environ.get("CONDA_DEFAULT_ENV", ""):
         args.condaVenv = os.environ.get("CONDA_DEFAULT_ENV", "")
       elif os.environ.get("VIRTUAL_ENV", ""):
@@ -145,7 +145,7 @@ class RHQueueParser(object):
           args.venv = rhq_value
         else:
           args.condaVenv = rhq_value
-          
+
     if args.help:
       self.parser.print_help()
       print("Queue sub-command")

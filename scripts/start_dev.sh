@@ -18,8 +18,14 @@ rhqtest() {
 rhqstart() {
   source ~/venv/rhqueue/bin/activate
   cd ~/rh-queue
-  pip3 install -e .
+  python setup.py develop
 }
 rhqstop() {
   deactivate
+}
+slurm-update-conf() {
+  cd ~/rh-queue/slurm-install-files/
+  sudo cp slurm.conf /etc/slurm-llnl
+  sudo cp gres.conf /etc/slurm-llnl
+  cd $OLDPWD
 }

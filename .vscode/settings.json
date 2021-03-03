@@ -1,4 +1,4 @@
 {
-"python.pythonPath": "/usr/bin/python3",
+"python.pythonPath": "/homes/pmcd/venv/rhqueue/bin/python",
 "jupyter.jupyterServerType": "local"
 }

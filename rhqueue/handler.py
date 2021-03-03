@@ -52,7 +52,6 @@ class RHQueueHander:
     # base sbatch arguments
 
     self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
-    self.processor.add_sbatchline("--priority", args.priority)
     self.processor.add_sbatchline("--ntasks", "1")
     self.processor.add_sbatchline("--gres", "gpu:titan:1")
     self.processor.add_sbatchline("-o", args.output_file)
@@ -107,7 +106,14 @@ class RHQueueHander:
                            stdout=subprocess.PIPE,
                            shell=True)
       subprocess.call(["rm ./script.sh"], stdout=subprocess.PIPE, shell=True)
-      print(res.stdout.decode("utf-8")[:-1])
+      full = res.stdout.decode("utf-8")[:-1]
+      id_val = full.split()[-1]
+      subprocess.call(
+          [f"scontrol update jobid={id_val} priority={args.priority}"],
+          stdout=subprocess.PIPE,
+          stderr=subprocess.PIPE,
+          shell=True)
+      print(full)
       exit(res.returncode)
 
   def info(self, args):
@@ -115,4 +121,5 @@ class RHQueueHander:
     if args.job_id:
       info.print_vals(job_id=args.job_id, verbosity=args.verbosity)
     else:
-      info.print_vals(columns=[0, 3, 2, 5, 7])
+      info.print_vals(
+          columns=["Id", "User", "JobName", "RunTime", "NodeList", "Priority"])
