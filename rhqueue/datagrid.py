@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 
 class DataGridLine(object):
-    def __init__(self, id: int, data=None) -> None:
+    def __init__(self, id=None, data=None) -> None:
         self.info = data or self.get_job_by_id(id)
         self.info["User"] = self.info["UserId"].split("(")[0]
         self.info["Id"] = self.info["JobId"]
@@ -31,10 +31,12 @@ class DataGridLine(object):
     def nodelist(self):
         if self._nodelist is None:
             if self.info["NodeList"] == "(null)":
-                val = ServerSet.from_slurm_list(
-                    self.info["ExcNodeList"]).invert
+                print(self.info)
+                val = ServerSet.from_slurm_list(self.info["ExcNodeList"],
+                                                self.info["Partition"]).invert
             else:
-                val = ServerSet.from_slurm_list(self.info["NodeList"])
+                val = ServerSet.from_slurm_list(self.info["NodeList"],
+                                                self.info["Partition"])
             self._nodelist = val
         return self._nodelist.to_slurm_list()
 
@@ -77,18 +79,12 @@ class JobNotFoundException(Exception):
 class DataGridHandler(object):
     def __init__(self, data=None) -> None:
         self.data: List[DataGridLine]
-        self.options = [
-            "JobID", "Partition", "Name", "UserName", "StateCompact",
-            "TimeUsed", "NumNodes", "ReasonList", "PriorityLong"
-        ]
         grid = data or subprocess.run(
-            f"squeue -O 'JobID'", stdout=subprocess.PIPE,
-            shell=True).stdout.decode("utf-8").split("\n")[1:-1]
-        grid = [i.split()[0] for i in grid]
-        self.data = [self._to_dataline(id) for id in grid]
-
-    def _to_dataline(self, id_val):
-        return DataGridLine(id_val)
+            "scontrol show jobs", stdout=subprocess.PIPE,
+            shell=True).stdout.decode("utf-8").split("\n\n")[:-1]
+        self.data = [
+            DataGridLine(data=handle_slurm_output(data)) for data in grid
+        ]
 
     def get_user_jobs(self, user):
         return [line for line in self.data if line.user == user]

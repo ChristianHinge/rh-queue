@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from rhqueue import *
+from rhqueue.handler import RHQueueHander
+from rhqueue.parser import RHQueueParser
 
 
 if __name__ == "__main__":

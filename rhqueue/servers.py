@@ -2,13 +2,8 @@ import re
 import subprocess
 import itertools
 
-# def handle_dash(dash_str: str):
-#   start_stop = list(map(int, dash_str.split("-")))
-#   start_stop[1] += 1
-#   return list(range(*start_stop))
 
-
-def get_servers():
+def get_servers(partition=None):
     res_str = subprocess.run("sinfo -N", shell=True,
                              stdout=subprocess.PIPE).stdout.decode("utf-8")
     servers = [i.split(" ")[0] for i in res_str.split("\n")[1:-1]]
@@ -16,33 +11,32 @@ def get_servers():
 
 
 class ServerSet(set):
-    default_servers = get_servers()
-
-    def __init__(self, servers):
+    find_string = r"([a-z]+)(\[(\d)[-,]*(\d*)\]|\d)"
+    def __init__(self, servers, partition=""):
+        self.default_servers = set([i for i in get_servers() if partition in i])
         self._set = set(servers)
+        self._partition = partition
         super().__init__(servers)
 
     @classmethod
-    def from_slurm_list(cls, string):
+    def from_slurm_list(cls, string, partition):
         servers = []
-        temp = re.findall(r"([a-zA-Z]+)(\d+|\[((\d+|(\d+-\d+)),?)+\])", string)
-        for value in temp:
-            name = value[0]
-            if "[" == value[1][0] and "]" == value[1][-1]:
-                for entry in value[1][1:-1].split(","):
-                    entry: str
-                    if "-" in entry:
-                        start, stop, *_ = entry.split("-")
-                        servers.extend([
-                            *map(lambda x: f"{name}{x}",
-                                 range(int(start),
-                                       int(stop) + 1))
-                        ])
-                    else:
-                        servers.append(f"{name}{entry}")
+        regex = r"([a-z]+)(\[(\d+)([-,]{0,1})(\d*)\]|\d)"
+        for name, first, start, range_type, stop in re.findall(regex, string):
+            try:
+                start = int(start)
+                stop = int(stop)
+            except:
+                pass
+            if first[0] == "[":
+                if range_type:
+                    for i in range(start,stop+1):
+                        servers.append(f"{name}{i}")
+                else:
+                    servers.append(f"{name}{start}")
             else:
-                servers.append(f"{value[0]}{value[1]}")
-        return cls(servers)
+                servers.append(f"{name}{first}")
+        return cls(servers, partition)
 
     def to_slurm_list(self):
         if "[" not in str(self._set) and "]" not in str(
@@ -70,10 +64,9 @@ class ServerSet(set):
 
     @property
     def invert(self):
-        return ServerSet(self.default_servers - self._set)
+        return ServerSet(self.default_servers - self._set, self._partition)
 
     def as_list(self):
-
         return list(sorted(self._set))
 
     def as_set(self):

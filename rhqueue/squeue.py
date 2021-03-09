@@ -27,11 +27,6 @@ class SqueueDataGridHandler(DataGridHandler):
         else:
             print("You do not have the permission to cancel that job")
 
-
-class SqueueDataGridPrinter(DataGridHandler):
-    def __init__(self):
-        super().__init__()
-
     def print_vals(self, job_id=None, verbosity=None, columns=[]):
         if columns:
             self.print_info(columns)
@@ -48,7 +43,8 @@ class SqueueDataGridPrinter(DataGridHandler):
                     "WorkDir", "NodesList"
                 ]
                 output = self.from_id(job_id)
-                output = output.get_from_keys(keys) if verbosity < 2 else output.info
+                output = output.get_from_keys(
+                    keys) if verbosity < 2 else output.info
                 GridPrinter([
                     sorted([list(j) for j in output.items()],
                            key=lambda x: x[0])
@@ -59,7 +55,8 @@ class SqueueDataGridPrinter(DataGridHandler):
     def print_info(self, columns):
         self.colmn_sort = [(idx, val) for idx, val in enumerate(columns)]
         vals = [self.running_items, self.queued_items]
-        data = [[self._get_columns(value, columns) for value in items] for items in vals]
+        data = [[self._get_columns(value, columns) for value in items]
+                for items in vals]
         headers = [columns] * len(data)
         GridPrinter(data,
                     title="Queue Information",

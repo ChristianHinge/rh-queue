@@ -121,7 +121,7 @@ class RHQueueHander:
             exit(res.returncode)
 
     def info(self, args):
-        info = SqueueDataGridPrinter()
+        info = SqueueDataGridHandler()
         if args.job_id:
             info.print_vals(job_id=args.job_id, verbosity=args.verbosity)
         else:
