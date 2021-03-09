@@ -8,7 +8,7 @@ _complete_functions() {
     elif [ "${COMP_WORDS[-1]:0:1}" == "-" ]; then
       COMPREPLY=($(compgen -W "a c v p e o b s" "${COMP_WORDS[-1]#-}"))
     else
-      COMPREPLY=($(compgen -o plusdirs -G *.py "${COMP_WORDS[-1]}"))
+      COMPREPLY=($(compgen -o plusdirs -G ${COMP_WORDS[-1]}*.py "${COMP_WORDS[-1]}"))
     fi
   fi
 

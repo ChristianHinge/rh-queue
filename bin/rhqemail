@@ -4,14 +4,14 @@ import argparse
 
 
 class EmailParser(object):
-  def __init__(self):
-    parser = argparse.ArgumentParser("RHQueue Email Sender")
-    parser.add_argument("action",
-                        choices=["start", "completed", "failed"],
-                        help="The content of the email to send")
-    args = parser.parse_args()
-    EmailSender(action=args.action).send_email()
+    def __init__(self):
+        parser = argparse.ArgumentParser("RHQueue Email Sender")
+        parser.add_argument("action",
+                            choices=["start", "completed", "failed"],
+                            help="The content of the email to send")
+        args = parser.parse_args()
+        EmailSender(action=args.action).send_email()
 
 
 if __name__ == "__main__":
-  EmailParser()
+    EmailParser()
