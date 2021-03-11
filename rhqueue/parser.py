@@ -136,11 +136,9 @@ class RHQueueParser(object):
             "-j",
             help="the job id to get further information about")
         parser_info.add_argument("-v",
-                                 "--verbosity",
-                                 help="the level of verbosity",
-                                 type=int,
-                                 choices=[1, 2],
-                                 default=1)
+                                 "--verbose",
+                                 help="verbose output for the selected job",
+                                 action="store_true")
         args = self.parser.parse_args(argv)
 
         if args.command == "queue" and not (args.venv or args.condaVenv):

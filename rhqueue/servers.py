@@ -1,41 +1,66 @@
+from multiprocessing import get_start_method
 import re
 import subprocess
 import itertools
 
 
 def get_servers(partition=None):
-    res_str = subprocess.run("sinfo -N", shell=True,
+    command = "sinfo -N" if partition is None else f"sinfo -N -p {partition}"
+    res_str = subprocess.run(command, shell=True,
                              stdout=subprocess.PIPE).stdout.decode("utf-8")
-    servers = [i.split(" ")[0] for i in res_str.split("\n")[1:-1]]
-    return set(servers)
+    data = [i.split(" ") for i in res_str.split("\n")[1:-1]]
+    servers = []
+    for server, _, part, _ in [(j for j in i if j) for i in data]:
+        if partition is None and part[-1] == "*":
+            servers.append(server)
+        elif partition is not None:
+            servers.append(server)
+    return servers
 
 
 class ServerSet(set):
     find_string = r"([a-z]+)(\[(\d)[-,]*(\d*)\]|\d)"
-    def __init__(self, servers, partition=""):
-        self.default_servers = set([i for i in get_servers() if partition in i])
+
+    def __init__(self, servers, partitions=[]):
+        default_servers = set(p for partition in partitions
+                              for p in get_servers(partition))
+        print(default_servers, partitions)
+        if len(servers) == 0:
+            self.default_servers = set(get_servers())
+        else:
+            self.default_servers = default_servers
         self._set = set(servers)
-        self._partition = partition
+        self._partition = partitions
         super().__init__(servers)
 
     @classmethod
-    def from_slurm_list(cls, string, partition):
+    def from_slurm_list(cls, string:str):
+        """Builds the ServerSet based on the string passed to the function
+
+        Args:
+            string (str): the string to build the set from
+
+        Returns:
+            ServerSet: The ServerSet from the string passed
+        """
         servers = []
-        regex = r"([a-z]+)(\[(\d+)([-,]{0,1})(\d*)\]|\d)"
-        for name, first, start, range_type, stop in re.findall(regex, string):
-            try:
-                start = int(start)
-                stop = int(stop)
-            except:
-                pass
-            if first[0] == "[":
-                if range_type:
-                    for i in range(start,stop+1):
+        partition = []
+        servers = []
+        partition = []
+        regex = r"([a-z]+)(\[(\d+,?|\d+[-]\d*)+\]|\d)"
+        for name, whole, _ in re.findall(regex, string):
+            partition.append(name)
+            inner_regex = r"((\d+)-?(\d+)?)+"
+            for _, start, stop in re.findall(inner_regex, whole):
+            
+                try:
+                    start = int(start)
+                    stop = int(stop)
+                except:
+                    start = int(start)
+                    stop = int(start)
+                for i in range(start, stop + 1):
                         servers.append(f"{name}{i}")
-                else:
-                    servers.append(f"{name}{start}")
-            else:
-                servers.append(f"{name}{first}")
         return cls(servers, partition)
 
     def to_slurm_list(self):

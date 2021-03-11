@@ -29,14 +29,13 @@ class DataGridLine(object):
 
     @property
     def nodelist(self):
+        print(self._nodelist)
         if self._nodelist is None:
             if self.info["NodeList"] == "(null)":
-                print(self.info)
-                val = ServerSet.from_slurm_list(self.info["ExcNodeList"],
-                                                self.info["Partition"]).invert
+                val = ServerSet.from_slurm_list(
+                    self.info["ExcNodeList"]).invert
             else:
-                val = ServerSet.from_slurm_list(self.info["NodeList"],
-                                                self.info["Partition"])
+                val = ServerSet.from_slurm_list(self.info["NodeList"])
             self._nodelist = val
         return self._nodelist.to_slurm_list()
 
@@ -58,7 +57,7 @@ class DataGridLine(object):
     def __getitem__(self, s: int):
         if s == "Name":
             return self.script_name
-        if s == "NodeList" or s == "NodesList":
+        if s == "NodeList":
             return self.nodelist
         return self.info[s]
 

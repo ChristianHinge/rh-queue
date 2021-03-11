@@ -4,8 +4,6 @@ import subprocess
 from typing import List
 from .datagrid import DataGridLine, DataGridHandler
 from .printer import GridPrinter
-from .functions import handle_slurm_output
-from .servers import ServerSet
 
 
 class SqueueDataGridHandler(DataGridHandler):
@@ -27,36 +25,27 @@ class SqueueDataGridHandler(DataGridHandler):
         else:
             print("You do not have the permission to cancel that job")
 
-    def print_vals(self, job_id=None, verbosity=None, columns=[]):
+    def print_vals(self, job_id=None, verbose=False, columns=[]):
         if columns:
             self.print_info(columns)
         else:
-            res = subprocess.run(f"scontrol show jobs {job_id}",
-                                 shell=True,
-                                 stdout=subprocess.PIPE)
-            if res.returncode != 0:
-                print("there was a problem getting the job")
-            else:
-                keys = [
-                    "EligibleTime", "SubmitTime", "StartTime", "ExcNodeList",
-                    "JobId", "JobName", "JobState", "StdOut", "UserId",
-                    "WorkDir", "NodesList"
-                ]
-                output = self.from_id(job_id)
-                output = output.get_from_keys(
-                    keys) if verbosity < 2 else output.info
-                GridPrinter([
-                    sorted([list(j) for j in output.items()],
-                           key=lambda x: x[0])
-                ],
-                            headers=[["Key", "Value"]],
-                            title=f"Information about job:{job_id}")
+            keys = [
+                "EligibleTime", "SubmitTime", "StartTime", "ExcNodeList",
+                "JobId", "JobName", "JobState", "StdOut", "UserId", "WorkDir",
+                "NodeList"
+            ]
+            output = self.from_id(job_id)
+            output = output.info if verbose else output.get_from_keys(keys)
+            GridPrinter([
+                sorted([list(j) for j in output.items()], key=lambda x: x[0])
+            ],
+                        headers=[["Key", "Value"]],
+                        title=f"Information about job:{job_id}")
 
     def print_info(self, columns):
-        self.colmn_sort = [(idx, val) for idx, val in enumerate(columns)]
-        vals = [self.running_items, self.queued_items]
+        item_lists = [self.running_items, self.queued_items]
         data = [[self._get_columns(value, columns) for value in items]
-                for items in vals]
+                for items in item_lists]
         headers = [columns] * len(data)
         GridPrinter(data,
                     title="Queue Information",

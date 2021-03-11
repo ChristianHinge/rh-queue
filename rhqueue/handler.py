@@ -123,7 +123,7 @@ class RHQueueHander:
     def info(self, args):
         info = SqueueDataGridHandler()
         if args.job_id:
-            info.print_vals(job_id=args.job_id, verbosity=args.verbosity)
+            info.print_vals(job_id=args.job_id, verbose=args.verbose)
         else:
             info.print_vals(columns=[
                 "Id", "User", "JobName", "RunTime", "NodeList", "Priority"
