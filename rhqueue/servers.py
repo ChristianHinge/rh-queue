@@ -19,12 +19,10 @@ def get_servers(partition=None):
 
 
 class ServerSet(set):
-    find_string = r"([a-z]+)(\[(\d)[-,]*(\d*)\]|\d)"
 
     def __init__(self, servers, partitions=[]):
         default_servers = set(p for partition in partitions
                               for p in get_servers(partition))
-        print(default_servers, partitions)
         if len(servers) == 0:
             self.default_servers = set(get_servers())
         else:
@@ -43,8 +41,6 @@ class ServerSet(set):
         Returns:
             ServerSet: The ServerSet from the string passed
         """
-        servers = []
-        partition = []
         servers = []
         partition = []
         regex = r"([a-z]+)(\[(\d+,?|\d+[-]\d*)+\]|\d)"

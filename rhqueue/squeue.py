@@ -6,18 +6,19 @@ from .datagrid import DataGridLine, DataGridHandler
 from .printer import GridPrinter
 
 
-class SqueueDataGridHandler(DataGridHandler):
+class SqueueDataGridHandler:
     def __init__(self):
         super().__init__()
         self.admin = grp.getgrnam("sudo").gr_mem
         self.user = getpass.getuser()
+        self.data = DataGridHandler()
 
     @property
     def is_user_admin(self):
         return self.user in self.admin
 
     def cancel_job(self, job_id):
-        if self.is_user_job(self.user, job_id):
+        if self.data.is_user_job(self.user, job_id):
             subprocess.call(["scancel {}".format(job_id)], shell=True)
         elif self.is_user_admin:
             subprocess.call(["sudo -u slurm scancel {}".format(job_id)],
@@ -34,7 +35,7 @@ class SqueueDataGridHandler(DataGridHandler):
                 "JobId", "JobName", "JobState", "StdOut", "UserId", "WorkDir",
                 "NodeList"
             ]
-            output = self.from_id(job_id)
+            output = self.data.from_id(job_id)
             output = output.info if verbose else output.get_from_keys(keys)
             GridPrinter([
                 sorted([list(j) for j in output.items()], key=lambda x: x[0])
@@ -43,7 +44,7 @@ class SqueueDataGridHandler(DataGridHandler):
                         title=f"Information about job:{job_id}")
 
     def print_info(self, columns):
-        item_lists = [self.running_items, self.queued_items]
+        item_lists = [self.data.running_items, self.data.queued_items]
         data = [[self._get_columns(value, columns) for value in items]
                 for items in item_lists]
         headers = [columns] * len(data)

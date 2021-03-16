@@ -1,3 +1,4 @@
+Servers=("titan1" "titan2" "titan3" "titan4" "titan5" "titan7")
 rhqinstall() {
   cd /homes/pmcd/rh-queue
   rm -rf ./build
@@ -24,4 +25,11 @@ slurm-update-conf() {
   sudo cp slurm.conf /etc/slurm-llnl
   sudo cp gres.conf /etc/slurm-llnl
   cd $OLDPWD
+}
+
+rhqcheck-version() {
+    for server in "${Servers[@]}"; do
+        echo $server
+        ssh $server -t "rhqueue -V"
+    done
 }

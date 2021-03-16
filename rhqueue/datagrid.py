@@ -22,6 +22,10 @@ class DataGridLine(object):
         return self.info["User"]
 
     @property
+    def priority(self):
+        return self.info["Priority"]
+
+    @property
     def script_name(self):
         if self._script_name is None:
             self._script_name = self.info["JobName"]
@@ -29,7 +33,6 @@ class DataGridLine(object):
 
     @property
     def nodelist(self):
-        print(self._nodelist)
         if self._nodelist is None:
             if self.info["NodeList"] == "(null)":
                 val = ServerSet.from_slurm_list(
@@ -84,6 +87,7 @@ class DataGridHandler(object):
         self.data = [
             DataGridLine(data=handle_slurm_output(data)) for data in grid
         ]
+        self.data.sort(key=lambda x: x.priority, reverse=True)
 
     def get_user_jobs(self, user):
         return [line for line in self.data if line.user == user]
