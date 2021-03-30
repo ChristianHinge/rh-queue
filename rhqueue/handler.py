@@ -111,6 +111,7 @@ class RHQueueHander:
                             stdout=subprocess.PIPE,
                             shell=True)
             full = res.stdout.decode("utf-8")[:-1]
+            print(full)
             id_val = full.split()[-1]
             subprocess.call(
                 [f"scontrol update jobid={id_val} priority={args.priority}"],
