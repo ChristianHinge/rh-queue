@@ -51,10 +51,11 @@ _prep-prerequisites() {
 }
 
 _build-slurm-deb() {
-    _prep-prerequisites
-    rhqbuild
-    mkdir -p /tmp/slurm /opt/slurm
-    cd /tmp/slurm
+    # _prep-prerequisites
+    # rhqbuild
+    mkdir -p /opt/slurm /opt/slurm-src
+    local slurmBuild="/opt/slurm"
+    cd /opt/slurm-src
     local slurmFile="slurm-$1-latest"
     echo "Downloading version $slurmFile"
     wget "https://download.schedmd.com/slurm/$slurmFile.tar.bz2"
@@ -65,12 +66,15 @@ _build-slurm-deb() {
     echo "files ${slurmdEndVersion}"
     cd $slurmdEndVersion
     local pamLocation=$(find /lib -name '*pam_cap.so' -printf '%h\n')
-    ./configure --prefix=/tmp/slurm-build --sysconfdir=/etc/slurm --enable-pam --with-pam_dir=$pamLocation --without-shared-libslurm
+    ./configure --prefix=/opt/slurm --sysconfdir=/etc/slurm --enable-pam --with-pam_dir=$pamLocation --without-shared-libslurm
+    # powerpc64le-unknown-linux-gnu
+    # x86_64-pc-linux-gnu
     make -j4
     make contrib -j4
     make install -j4
     cd ..
-    fpm -s dir -t deb -v ${slurmdEndVersion#slurm-} -n slurm --prefix=/usr -C /tmp/slurm-build .
+    cp $RHQLOCATION/slurm-install-files/*.sh $slurmBuild
+    fpm -s dir -t deb -v ${slurmdEndVersion#slurm-}-1.0 -n slurm-rhqueue --prefix=/usr --config-files=/opt/slurm -C /opt/slurm .
 }
 
 _rhqaddtorepo() {
@@ -83,6 +87,27 @@ _rhqaddtorepo() {
     sudo sh -c "dpkg-scanpackages . | gzip -c9  > Packages.gz"
 }
 
+install-slurm(){
+    sudo apt remove slurm-wlm slurmd slurmctld slurm-wlm-basic-plugins slurm-client
+    cp ~/slurm-rhqueue_20.11.5-1.0_amd64.deb /tmp
+    sudo apt install /tmp/slurm-rhqueue_20.11.5-1.0_amd64.deb
+    _post-install
+}
+
+_post-install() {
+    sudo mkdir -p /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurm/ctld /var/spool/slurm/d /var/log/slurm /var/run/slurm/
+    sudo chown -R slurm.slurm /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurm/ctld /var/spool/slurm/d /var/log/slurm /var/run/slurm/ /var/spool/slurmctld /var/spool/slurmd
+    cd $RHQLOCATION/slurm-install-files/
+    sudo cp *.conf /etc/slurm/
+    # workaround for copying to munge
+    cp *.key /tmp
+    sudo cp /tmp/*.key /etc/munge
+    sudo cp *.service /etc/systemd/system/
+    sudo cp *.service /lib/systemd/system/
+    sudo systemctl unmask slurmd
+    sudo systemctl unmask slurmctld
+}
+
 _run_inplace() {
     local startLoc=$PWD
     "$@"
@@ -93,4 +118,7 @@ build-slurm-deb() {
 }
 rhqaddtorepo() {
     _run_inplace _rhqaddtorepo "$@"
+}
+post-install(){
+    _run_inplace _post-install "$@"
 }

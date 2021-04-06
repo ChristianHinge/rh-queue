@@ -94,10 +94,10 @@ class DataGridHandler(object):
 
     def is_user_job(self, user, job_id):
         jobs = [line.id for line in self.get_user_jobs(user)]
-        if len(jobs) == 0:
-            raise JobNotFoundException(
-                f"uable to find the job {job_id} for user {user}\n Result: {jobs}"
-            )
+        # if len(jobs) == 0:
+        #     raise JobNotFoundException(
+        #         f"uable to find the job {job_id} for user {user}\n Result: {jobs}"
+        #     )
         return job_id in [line.id for line in self.get_user_jobs(user)]
 
     def __getitem__(self, k):

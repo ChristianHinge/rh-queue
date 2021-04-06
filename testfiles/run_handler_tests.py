@@ -101,22 +101,22 @@ class RHQueueTests(unittest.TestCase):
         self.assertFileContentsSame(output_file,
                                     "/homes/pmcd/venv/test-slurm/bin/python")
 
-    def test_shebang_venv(self):
-        output_file = f"{inspect.currentframe().f_code.co_name}.stdout"
-        script = subprocess.run(
-            self.args("test_shebang_venv.py",
-                      o=f"{inspect.currentframe().f_code.co_name}.stdout",
-                      v=self.v))
-        self.assertEqual(script.returncode, 0)
-        self.assertFileContentsSame(output_file,
-                                    "/homes/pmcd/venv/test-slurm/bin/python3")
+    # def test_shebang_venv(self):
+    #     output_file = f"{inspect.currentframe().f_code.co_name}.stdout"
+    #     script = subprocess.run(
+    #         self.args("test_shebang_venv.py",
+    #                   o=f"{inspect.currentframe().f_code.co_name}.stdout",
+    #                   v=self.v))
+    #     self.assertEqual(script.returncode, 0)
+    #     self.assertFileContentsSame(output_file,
+    #                                 "/homes/pmcd/venv/test-slurm/bin/python3")
 
-    def test_shebang_bin(self):
-        output_file = f"{inspect.currentframe().f_code.co_name}.stdout"
-        script = subprocess.run(
-            self.args("test_shebang_bin.py", o=output_file, v=self.v))
-        self.assertEqual(script.returncode, 0)
-        self.assertFileContentsSame(output_file, "/usr/bin/python3")
+    # def test_shebang_bin(self):
+    #     output_file = f"{inspect.currentframe().f_code.co_name}.stdout"
+    #     script = subprocess.run(
+    #         self.args("test_shebang_bin.py", o=output_file, v=self.v))
+    #     self.assertEqual(script.returncode, 0)
+    #     self.assertFileContentsSame(output_file, "/usr/bin/python3")
 
     def test_tensorflow(self):
         ouptut_file = f"test_tensorflow.stdout"
