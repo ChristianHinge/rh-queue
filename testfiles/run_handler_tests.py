@@ -99,7 +99,7 @@ class RHQueueTests(unittest.TestCase):
         self.assertEqual(script.returncode, 0)
         time.sleep(2)
         self.assertFileContentsSame(output_file,
-                                    "/homes/pmcd/venv/test-slurm/bin/python")
+                                    "/homes/pmcd/venv/test-slurm/bin/python3")
 
     # def test_shebang_venv(self):
     #     output_file = f"{inspect.currentframe().f_code.co_name}.stdout"

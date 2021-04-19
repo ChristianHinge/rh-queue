@@ -31,8 +31,19 @@ rhqstop() {
 
 slurm-update-conf() {
     cd $RHQLOCATION/slurm-install-files/
-    sudo cp slurm.conf /etc/slurm-llnl
-    sudo cp gres.conf /etc/slurm-llnl
+    sudo cp slurm.conf /etc/slurm
+    sudo cp gres.conf /etc/slurm
+    cd $OLDPWD
+}
+slurm-state () {
+    sudo systemctl $1 slurmctld
+    sudo systemctl $1 slurmd
+}
+slurm-update-service() {
+    cd $RHQLOCATION/slurm-install-files/
+    sudo cp slurmctld.service /etc/systemd/system/
+    sudo cp slurmd.service /etc/systemd/system
+    sudo systemctl daemon-reload
     cd $OLDPWD
 }
 
@@ -51,9 +62,9 @@ _prep-prerequisites() {
 }
 
 _build-slurm-deb() {
-    # _prep-prerequisites
-    # rhqbuild
-    mkdir -p /opt/slurm /opt/slurm-src
+    _prep-prerequisites
+    sudo mkdir -p /opt/slurm /opt/slurm-src
+    sudo chown -R pmcd.pmcd /opt/slurm /opt/slurm-src
     local slurmBuild="/opt/slurm"
     cd /opt/slurm-src
     local slurmFile="slurm-$1-latest"
@@ -96,7 +107,9 @@ install-slurm(){
 
 _post-install() {
     sudo mkdir -p /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurm/ctld /var/spool/slurm/d /var/log/slurm /var/run/slurm/
+
     sudo chown -R slurm.slurm /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurm/ctld /var/spool/slurm/d /var/log/slurm /var/run/slurm/ /var/spool/slurmctld /var/spool/slurmd
+    
     cd $RHQLOCATION/slurm-install-files/
     sudo cp *.conf /etc/slurm/
     # workaround for copying to munge

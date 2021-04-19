@@ -42,9 +42,9 @@ class RHQueueHander:
     def queue(self, args):
 
         self.check_shebang(args.script)
-        self.processor.add_scriptline(f"echo '{sys.argv}'", -16)
-        self.processor.add_scriptline(f"head -1 {args.script}", -15)
-        self.processor.add_scriptline("printenv", -14)
+        # self.processor.add_scriptline(f"echo '{sys.argv}'", -16)
+        # self.processor.add_scriptline(f"head -1 {args.script}", -15)
+        # self.processor.add_scriptline("printenv", -14)
         self.processor.add_scriptline(
             "srun -n1 {} {}".format(os.path.abspath(args.script),
                                     " ".join(args.args)), 0)
@@ -91,7 +91,7 @@ class RHQueueHander:
                 "conda activate {}".format(args.condaVenv), -1)
             self.processor.add_scriptline("conda deactivate", 1)
 
-        if args.servers:
+        if args.servers and args.servers.invert:
             self.processor.add_sbatchline("-x", ",".join(args.servers.invert))
         if args.source_script:
             self.processor.add_scriptline(f"source {args.source_script}", -20)
@@ -111,7 +111,6 @@ class RHQueueHander:
                             stdout=subprocess.PIPE,
                             shell=True)
             full = res.stdout.decode("utf-8")[:-1]
-            print(full)
             id_val = full.split()[-1]
             subprocess.call(
                 [f"scontrol update jobid={id_val} priority={args.priority}"],

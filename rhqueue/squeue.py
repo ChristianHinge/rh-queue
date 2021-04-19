@@ -19,12 +19,28 @@ class SqueueDataGridHandler:
 
     def cancel_job(self, job_id):
         if self.data.is_user_job(self.user, job_id):
-            subprocess.call(["scancel {}".format(job_id)], shell=True)
+            self.cancel_check("scancel {}", job_id)
         elif self.is_user_admin:
-            subprocess.call(["sudo -u slurm scancel {}".format(job_id)],
-                            shell=True)
+            self.cancel_check("sudo -u slurm scancel {}", job_id)
         else:
             print("You do not have the permission to cancel that job")
+
+    def cancel_check(self, cancel_command_struct, job_id):
+
+        valid = {"yes": True, "y": True, "no": False, "n": False}
+        while True:
+            choice = input(f"Do you wish delete {job_id}? [y/n]").lower()
+            if choice in valid:
+                res = valid[choice]
+                break
+            else:
+                print("Please respond with 'yes' or 'no' "
+                      "(or 'y' or 'n').\n")
+        if res:
+            subprocess.call([cancel_command_struct.format(job_id)], shell=True)
+        else:
+            print("cancelled script removal")
+            exit(0)
 
     def print_vals(self, job_id=None, verbose=False, columns=[]):
         if columns:
@@ -35,7 +51,7 @@ class SqueueDataGridHandler:
                 "JobId", "JobName", "JobState", "StdOut", "UserId", "WorkDir",
                 "NodeList"
             ]
-            output = self.data.from_id(job_id)
+            output = self.data.get_job_from_id(job_id)
             output = output.info if verbose else output.get_from_keys(keys)
             GridPrinter([
                 sorted([list(j) for j in output.items()], key=lambda x: x[0])

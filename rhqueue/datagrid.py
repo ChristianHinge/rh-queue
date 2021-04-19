@@ -94,10 +94,6 @@ class DataGridHandler(object):
 
     def is_user_job(self, user, job_id):
         jobs = [line.id for line in self.get_user_jobs(user)]
-        # if len(jobs) == 0:
-        #     raise JobNotFoundException(
-        #         f"uable to find the job {job_id} for user {user}\n Result: {jobs}"
-        #     )
         return job_id in [line.id for line in self.get_user_jobs(user)]
 
     def __getitem__(self, k):
@@ -121,7 +117,7 @@ class DataGridHandler(object):
     def queued_items(self):
         return [i for i in self.data if i.is_queued]
 
-    def from_id(self, id):
+    def get_job_from_id(self, id):
         try:
             return next((i for i in self.data if i.id == id or i["Id"] == id))
         except:

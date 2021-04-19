@@ -69,7 +69,7 @@ class RHQueueParserTester(unittest.TestCase):
         titans = "titan[1-3]"
         res = self.get_args(s=titans)
         self.assertEqual(res.servers.invert.as_list(),
-                         ["ibm1", "ibm2", "titan4", "titan5"])
+                         ["titan4", "titan5"])
 
     def test_queue_titan_range_single_range(self):
         titans = "titan[1-3,4,5-7]"
@@ -292,8 +292,9 @@ class RHQueueParserTester(unittest.TestCase):
         self.assertEqual(res.job_id, job_id)
 
     def test_info_verbosity(self):
-        verbosity = "2"
+        verbosity = True
         res = self.get_args(cmd="info", verbosity=verbosity)
+        print(res)
         self.assertEqual(res.verbosity, int(verbosity))
 
     def test_queue_source_script(self):
