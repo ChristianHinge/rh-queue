@@ -23,7 +23,8 @@ class RHQueueHander:
 
     def remove(self, args):
         data = SqueueDataGridHandler()
-        data.cancel_job(args.job)
+        for job in args.jobs:
+            data.cancel_job(job)
 
     def check_shebang(self, file_path):
         out = subprocess.run(f"head -1 {file_path}",
@@ -42,16 +43,21 @@ class RHQueueHander:
     def queue(self, args):
 
         self.check_shebang(args.script)
-        # self.processor.add_scriptline(f"echo '{sys.argv}'", -16)
-        # self.processor.add_scriptline(f"head -1 {args.script}", -15)
-        # self.processor.add_scriptline("printenv", -14)
         self.processor.add_scriptline(
             "srun -n1 {} {}".format(os.path.abspath(args.script),
                                     " ".join(args.args)), 0)
         self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
         # base sbatch arguments
-
+        comment_keys = [
+            "script", "venv", "condaVenv", "source_script", "email"
+        ]
+        comment_list = [
+            f"{k.capitalize()}:{v}" for k, v in vars(args).items()
+            if k in comment_keys
+        ]
+        self.processor.add_sbatchline("--comment",
+                                      f"\"{','.join(comment_list)}\"")
         self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
         self.processor.add_sbatchline("--ntasks", "1")
         self.processor.add_sbatchline("--gres", "gpu:titan:1")

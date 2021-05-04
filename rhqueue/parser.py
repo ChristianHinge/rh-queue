@@ -126,8 +126,9 @@ class RHQueueParser(object):
                                  help="print extended help")
         # Remove Subparser
         parser_remove = subparsers.add_parser("remove", help="remove help")
-        parser_remove.add_argument("job",
-                                   help="the job id of the job to cancel",
+        parser_remove.add_argument("jobs",
+                                   help="the job ids of the jobs to cancel",
+                                   nargs="+",
                                    type=int)
 
         parser_info = subparsers.add_parser("info", help="info help")

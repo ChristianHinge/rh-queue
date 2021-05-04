@@ -31,16 +31,17 @@ rhqstop() {
 rhqcheck-version() {
     for server in "${Servers[@]}"; do
         echo $server
-        ssh $server -t "rhqueue -V"
+        ssh $server -q -t "rhqueue -V"
     done
 }
 slurm-update-conf() {
     cd $RHQLOCATION/slurm-install-files/
     sudo cp slurm.conf /etc/slurm
     sudo cp gres.conf /etc/slurm
+    sudo cp cgroup.conf /etc/slurm
     cd $OLDPWD
 }
-slurm-state () {
+slurm-state() {
     sudo systemctl $1 slurmctld
     sudo systemctl $1 slurmd
 }
@@ -95,7 +96,7 @@ _rhqaddtorepo() {
     sudo sh -c "dpkg-scanpackages . | gzip -c9  > Packages.gz"
 }
 
-install-slurm(){
+install-slurm() {
     sudo apt remove slurm-wlm slurmd slurmctld slurm-wlm-basic-plugins slurm-client
     cp ~/slurm-rhqueue_20.11.5-1.0_amd64.deb /tmp
     sudo apt install /tmp/slurm-rhqueue_20.11.5-1.0_amd64.deb
@@ -106,7 +107,7 @@ _post-install() {
     sudo mkdir -p /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurmctld /var/spool/slurmd /var/log/slurm /run/slurm/
 
     sudo chown -R slurm.slurm /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurm/ctld /var/spool/slurm/d /var/log/slurm /run/slurm/ /var/spool/slurmctld /var/spool/slurmd
-    
+
     cd $RHQLOCATION/slurm-install-files/
     sudo cp *.conf /etc/slurm/
     # workaround for copying to munge
@@ -129,6 +130,6 @@ build-slurm-deb() {
 rhqaddtorepo() {
     _run_inplace _rhqaddtorepo "$@"
 }
-post-install(){
+post-install() {
     _run_inplace _post-install "$@"
 }

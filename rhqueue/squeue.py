@@ -18,6 +18,9 @@ class SqueueDataGridHandler:
         return self.user in self.admin
 
     def cancel_job(self, job_id):
+        if not self.data.job_exists(job_id):
+            print(f"The job {job_id} does not exist")
+            return
         if self.data.is_user_job(self.user, job_id):
             self.cancel_check("scancel {}", job_id)
         elif self.is_user_admin:

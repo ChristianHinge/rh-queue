@@ -1,3 +1,5 @@
+from os import EX_PROTOCOL
+from re import split
 from typing import List
 import subprocess
 from .servers import ServerSet
@@ -10,6 +12,15 @@ class DataGridLine(object):
         self.info = data or self.get_job_by_id(id)
         self.info["User"] = self.info["UserId"].split("(")[0]
         self.info["Id"] = self.info["JobId"]
+        try:
+            comment = {
+                i.split(":")[0]: i.split(":")[1]
+                for i in self.info["Comment"].split(",")
+            }
+            self.info = {**self.info, **comment}
+            del self.info["Comment"]
+        except:
+            pass
         self._script_name = None
         self._nodelist = None
 
@@ -95,6 +106,12 @@ class DataGridHandler(object):
     def is_user_job(self, user, job_id):
         jobs = [line.id for line in self.get_user_jobs(user)]
         return job_id in [line.id for line in self.get_user_jobs(user)]
+
+    def job_exists(self, job_id):
+        try:
+            return self.get_job_from_id(job_id)
+        except:
+            return False
 
     def __getitem__(self, k):
         if isinstance(k, str):
