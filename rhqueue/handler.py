@@ -42,9 +42,9 @@ class RHQueueHander:
 
     def queue(self, args):
 
-        self.check_shebang(args.script)
+        self.check_shebang(args.script_file)
         self.processor.add_scriptline(
-            "srun -n1 {} {}".format(os.path.abspath(args.script),
+            "srun -n1 {} {}".format(args.full_script,
                                     " ".join(args.args)), 0)
         self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
@@ -58,13 +58,13 @@ class RHQueueHander:
         ]
         self.processor.add_sbatchline("--comment",
                                       f"\"{','.join(comment_list)}\"")
-        self.processor.add_scriptline("chmod +x {}".format(args.script), -2)
+        self.processor.add_scriptline("chmod +x {}".format(os.path.abspath(args.script_file)), -2)
         self.processor.add_sbatchline("--ntasks", "1")
         self.processor.add_sbatchline("--gres", "gpu:titan:1")
         self.processor.add_sbatchline("-o", args.output_file)
         self.processor.add_sbatchline(
             "--job-name",
-            args.script_name if args.script_name else args.script)
+            args.script_name if args.script_name else args.script_file)
 
         if args.begin_time:
             self.processor.add_sbatchline("--begin",
@@ -75,7 +75,7 @@ class RHQueueHander:
             self.processor.add_scriptline(
                 f"export SLURM_OUTPUT_FILE='{args.output_file}'", -9)
             self.processor.add_scriptline(
-                f"export SLURM_SCRIPT='{os.path.abspath(args.script)}'", -8)
+                f"export SLURM_SCRIPT='{args.full_script}'", -8)
             self.processor.add_scriptline(
                 f"export SLURM_SCRIPT_ARGS='{' '.join(args.args)}'", -8)
             self.processor.add_scriptline(
@@ -107,9 +107,6 @@ class RHQueueHander:
         if args.test:
             print(args)
         else:
-            subprocess.call(["chmod +x {}".format(args.script)],
-                            stdout=subprocess.PIPE,
-                            shell=True)
             res = subprocess.run(self.processor.get_script_command_line(),
                                  stdout=subprocess.PIPE,
                                  shell=True)

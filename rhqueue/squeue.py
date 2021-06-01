@@ -18,21 +18,23 @@ class SqueueDataGridHandler:
         return self.user in self.admin
 
     def cancel_job(self, job_id):
-        if not self.data.job_exists(job_id):
+        job:DataGridLine = self.data.job_exists(job_id)
+        if not job:
             print(f"The job {job_id} does not exist")
             return
-        if self.data.is_user_job(self.user, job_id):
-            self.cancel_check("scancel {}", job_id)
+        if self.data.is_user_job(self.user, job):
+            self.cancel_check("scancel {}", job)
         elif self.is_user_admin:
-            self.cancel_check("sudo -u slurm scancel {}", job_id)
+            self.cancel_check("sudo -u slurm scancel {}", job)
         else:
             print("You do not have the permission to cancel that job")
 
-    def cancel_check(self, cancel_command_struct, job_id):
+    def cancel_check(self, cancel_command_struct, job_id:DataGridLine):
 
         valid = {"yes": True, "y": True, "no": False, "n": False}
+        print(f"job ID: {job_id}")
         while True:
-            choice = input(f"Do you wish delete {job_id}? [y/n]").lower()
+            choice = input(f"Do you wish delete job {job_id.id}? [y/n]").lower()
             if choice in valid:
                 res = valid[choice]
                 break
@@ -40,7 +42,7 @@ class SqueueDataGridHandler:
                 print("Please respond with 'yes' or 'no' "
                       "(or 'y' or 'n').\n")
         if res:
-            subprocess.call([cancel_command_struct.format(job_id)], shell=True)
+            subprocess.call([cancel_command_struct.format(job_id.id)], shell=True)
         else:
             print("cancelled script removal")
             exit(0)
