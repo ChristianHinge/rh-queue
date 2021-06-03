@@ -38,7 +38,9 @@ class RHQueueHander:
         if not "#!/usr/bin/env python3" in shebang:
             print("The recommened shebang is:\n" +
                   "\"#!/usr/bin/env python3\"")
-            exit(3)
+            # Only exit if shebang is not a path to a python executable
+            if 'python' not in shebang:
+                exit(3)
 
     def queue(self, args):
 
