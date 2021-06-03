@@ -142,17 +142,21 @@ class RHQueueParser(object):
                                  action="store_true")
         args = self.parser.parse_args(argv)
 
-        if args.command == "queue" and not (args.venv or args.condaVenv):
-            if os.environ.get("CONDA_DEFAULT_ENV", ""):
-                args.condaVenv = os.environ.get("CONDA_DEFAULT_ENV", "")
-            elif os.environ.get("VIRTUAL_ENV", ""):
-                args.venv = os.environ.get("VIRTUAL_ENV", "")
-            else:
-                rhq_value = os.environ.get("RHQ_ENV", "")
-                if "/" in rhq_value:
-                    args.venv = rhq_value
+        if args.command == "queue":
+            if not (args.venv or args.condaVenv):
+                if os.environ.get("CONDA_DEFAULT_ENV", ""):
+                    args.condaVenv = os.environ.get("CONDA_DEFAULT_ENV", "")
+                elif os.environ.get("VIRTUAL_ENV", ""):
+                    args.venv = os.environ.get("VIRTUAL_ENV", "")
                 else:
-                    args.condaVenv = rhq_value
+                    rhq_value = os.environ.get("RHQ_ENV", "")
+                    if "/" in rhq_value:
+                        args.venv = rhq_value
+                    else:
+                        args.condaVenv = rhq_value
+
+            if not args.script_name:
+                args.script_name = args.script_file
 
         if args.help:
             self.parser.print_help()
@@ -163,10 +167,6 @@ class RHQueueParser(object):
             print("Info sub-command")
             parser_info.print_help()
             exit(1)
-        setattr(
-            args, "script_name", args.script_name
-            if hasattr(args, "script_name") and args.script_name else
-            args.script_file if hasattr(args, "script_file") and args.script_file else "")
         self.args = args
         if args.version:
             print(f"rhqueue {__version__}")
