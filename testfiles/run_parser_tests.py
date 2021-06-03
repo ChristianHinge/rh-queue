@@ -105,6 +105,10 @@ class RHQueueParserTester(unittest.TestCase):
 
     def test_queue_venv_environ(self):
         os.environ["RHQ_ENV"] = "/homes/pmcd/venv/test-slurm"
+        try:
+            del os.environ["VIRTUAL_ENV"]
+        except:
+            pass
         res = self.get_args()
         self.assertEqual(res.venv, "/homes/pmcd/venv/test-slurm")
         del os.environ["RHQ_ENV"]
@@ -112,7 +116,10 @@ class RHQueueParserTester(unittest.TestCase):
     def test_queue_venv_virtual_env(self):
         os.environ["VIRTUAL_ENV"] = "/homes/pmcd/venv/test-slurm"
         res = self.get_args()
-        del os.environ["VIRTUAL_ENV"]
+        try:
+            del os.environ["VIRTUAL_ENV"]
+        except:
+            pass
         self.assertEqual(res.venv, "/homes/pmcd/venv/test-slurm")
 
     def test_queue_venv_priority_environ(self):
@@ -148,6 +155,7 @@ class RHQueueParserTester(unittest.TestCase):
 
     def test_queue_conda_venv_rhq(self):
         os.environ["RHQ_ENV"] = "test-conda"
+        del os.environ["VIRTUAL_ENV"]
         res = self.get_args()
         del os.environ["RHQ_ENV"]
         self.assertEqual(res.condaVenv, "test-conda")
@@ -280,11 +288,11 @@ class RHQueueParserTester(unittest.TestCase):
     def test_remove_job_id(self):
         job = "1234"
         res = self.get_args(job, cmd="remove")
-        self.assertEqual(res.job, int(job))
+        self.assertTrue(int(job) in res.jobs)
 
     def test_info_default(self):
         res = self.get_args(cmd="info")
-        self.assertEqual(res.verbosity, 1)
+        self.assertEqual(res.verbose, False)
 
     def test_info_job_id(self):
         job_id = "1234"
@@ -292,10 +300,8 @@ class RHQueueParserTester(unittest.TestCase):
         self.assertEqual(res.job_id, job_id)
 
     def test_info_verbosity(self):
-        verbosity = True
-        res = self.get_args(cmd="info", verbosity=verbosity)
-        print(res)
-        self.assertEqual(res.verbosity, int(verbosity))
+        res = self.get_args(cmd="info", verbose="")
+        self.assertEqual(res.verbose, True)
 
     def test_queue_source_script(self):
         script = "/homes/volerous/script"

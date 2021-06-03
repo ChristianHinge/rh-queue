@@ -82,7 +82,7 @@ class DataGridLine(object):
         return ret
 
     def __repr__(self) -> str:
-        return f"DataLine:user={self.user}, jobID={self.id}"
+        return f"Job:jobID={self.id}, user={self.user}, name={self.script_name}, server={self.nodelist}"
 
 
 class JobNotFoundException(Exception):

@@ -1,6 +1,6 @@
 import argparse
 import os
-from rhqueue.actions import FooAction
+from rhqueue.actions import FooAction, ScriptTypeAction
 import sys
 from .functions import *
 from .version import __version__
@@ -26,8 +26,8 @@ class RHQueueParser(object):
                                              help="Used to queue scripts")
         group = parser_queue.add_mutually_exclusive_group()
         parser_queue.add_argument("script",
-                                  metavar="script",
-                                  type=str,
+                                  metavar="script_file",
+                                  action=ScriptTypeAction,
                                   help="""
           The script to run on a gpu.
           At the top of each file there must be the shebang '#!/usr/bin/env <python_version>'
@@ -166,7 +166,7 @@ class RHQueueParser(object):
         setattr(
             args, "script_name", args.script_name
             if hasattr(args, "script_name") and args.script_name else
-            args.script if hasattr(args, "script") and args.script else "")
+            args.script_file if hasattr(args, "script_file") and args.script_file else "")
         self.args = args
         if args.version:
             print(f"rhqueue {__version__}")
