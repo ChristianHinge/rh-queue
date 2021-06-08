@@ -13,7 +13,7 @@ Create slurm spool directory
     sudo chown -R slurm.slurm /var/spool/slurm-llnl
 
 Create slurm pid directory
-    
+
     sudo mkdir /var/run/slurm-llnl/
     sudo chown -R slurm.slurm /var/run/slurm-llnl
 
@@ -31,27 +31,32 @@ ensure `$id slurm` is
 
 
 Start and enable the slurm manager on boot (Controller Node)
-    
+
     sudo systemctl start slurmctld
     sudo systemctl enable slurmctld
 
 Start slurmd and enable on boot (Compute Node)
-    
+
     sudo systemctl start slurmd
     sudo systemctl enable slurmd
 
 Get info with:
-    
+
     slurmd -C
 
 Add new info to all slurm conf files
 
 update gres files
 
-copy slurm.conf and gres.conf:
+copy slurm.conf and gres.conf (on all nodes):
 
-    sudo cp slurm.conf /etc/slurm-llnl
-    sudo cp gres.conf /etc/slurm-llnl
+    sudo cp slurm.conf /etc/slurm
+    sudo cp gres.conf /etc/slurm
+
+Update slurm with .conf changes (on all nodes):
+    sudo systemctl restart slurmctld
+    sudo systemctl restart slurmctld
+    sudo scontrol reconfigure
 
 setup munge:
 
