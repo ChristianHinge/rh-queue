@@ -1,7 +1,5 @@
-from rhqueue.servers import ServerSet
 import subprocess
 import re
-from multiprocessing import Pool
 from typing import Dict
 
 
@@ -30,6 +28,8 @@ def check_server(server):
 
 
 def get_open_servers(output_string):
+    from rhqueue.servers import ServerSet
+    from multiprocessing import Pool
     servers = ServerSet.from_slurm_list(output_string).as_list()
     pool = Pool(7)
     vals = pool.map(check_server, servers)

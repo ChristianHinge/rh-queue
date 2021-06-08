@@ -1,4 +1,3 @@
-from multiprocessing import get_start_method
 import re
 import subprocess
 import itertools

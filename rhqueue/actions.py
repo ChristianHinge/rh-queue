@@ -1,7 +1,6 @@
 import argparse
-from enum import Enum
 import os
-from fnmatch import fnmatch
+
 
 
 class FooAction(argparse.Action):
@@ -53,6 +52,7 @@ class ScriptTypeAction(argparse.Action):
         setattr(namespace, "full_script", call_value)
 
     def find_match(self, fname):
+        from fnmatch import fnmatch
         for k, v in self.matches.items():
             if fnmatch(fname, k):
                 return v(fname)

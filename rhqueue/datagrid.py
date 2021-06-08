@@ -1,10 +1,7 @@
-from os import EX_PROTOCOL
-from re import split
 from typing import List
 import subprocess
-from .servers import ServerSet
 from .functions import handle_slurm_output
-from collections import OrderedDict
+
 
 
 class DataGridLine(object):
@@ -44,6 +41,7 @@ class DataGridLine(object):
 
     @property
     def nodelist(self):
+        from .servers import ServerSet
         if self._nodelist is None:
             if self.info["NodeList"] == "(null)":
                 val = ServerSet.from_slurm_list(
@@ -76,6 +74,7 @@ class DataGridLine(object):
         return self.info[s]
 
     def get_from_keys(self, keys):
+        from collections import OrderedDict
         ret = OrderedDict()
         for k in keys:
             ret[k] = self[k]
@@ -104,14 +103,7 @@ class DataGridHandler(object):
         return [line for line in self.data if line.user == user]
 
     def is_user_job(self, user, job_id):
-        jobs = [line.id for line in self.get_user_jobs(user)]
         return job_id in [line.id for line in self.get_user_jobs(user)]
-
-    def job_exists(self, job_id):
-        try:
-            return self.get_job_from_id(job_id)
-        except:
-            return False
 
     def __getitem__(self, k):
         if isinstance(k, str):
@@ -122,7 +114,7 @@ class DataGridHandler(object):
             return self.__getitem__(k[0])[k[1]]
         else:
             raise Exception(f"incorrect keys:{k}")
-
+        
     def __len__(self) -> int:
         return len(self.data)
 
@@ -134,8 +126,8 @@ class DataGridHandler(object):
     def queued_items(self):
         return [i for i in self.data if i.is_queued]
 
-    def get_job_from_id(self, id):
+    def get_job_from_id(self, job_id):
         try:
-            return next((i for i in self.data if i.id == id or i["Id"] == id))
+            return next((i for i in self.data if i.id == job_id))
         except:
             raise JobNotFoundException(f"uable to find the job {id}")

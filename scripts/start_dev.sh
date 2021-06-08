@@ -25,15 +25,18 @@ rhqstart() {
     cd $RHQLOCATION
     python setup.py develop
 }
+
 rhqstop() {
     deactivate
 }
+
 rhqcheck-version() {
     for server in "${Servers[@]}"; do
         echo $server
         ssh $server -q -t "rhqueue -V"
     done
 }
+
 slurm-update-conf() {
     cd $RHQLOCATION/slurm-install-files/
     sudo cp slurm.conf /etc/slurm
@@ -41,10 +44,12 @@ slurm-update-conf() {
     sudo cp cgroup.conf /etc/slurm
     cd $OLDPWD
 }
+
 slurm-state() {
     sudo systemctl $1 slurmctld
     sudo systemctl $1 slurmd
 }
+
 slurm-update-service() {
     cd $RHQLOCATION/slurm-install-files/
     sudo cp slurmctld.service /etc/systemd/system/
@@ -52,6 +57,7 @@ slurm-update-service() {
     sudo systemctl daemon-reload
     cd $OLDPWD
 }
+
 _prep-prerequisites() {
     sudo apt-get update
     sudo apt-get install -y git gcc make ruby ruby-dev libpam0g-dev libmunge-dev libmunge2 munge
@@ -105,9 +111,7 @@ install-slurm() {
 
 _post-install() {
     sudo mkdir -p /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurmctld /var/spool/slurmd /var/log/slurm /run/slurm/
-
     sudo chown -R slurm.slurm /etc/slurm /etc/slurm/prolog.d /etc/slurm/epilog.d /var/spool/slurm/ctld /var/spool/slurm/d /var/log/slurm /run/slurm/ /var/spool/slurmctld /var/spool/slurmd
-
     cd $RHQLOCATION/slurm-install-files/
     sudo cp *.conf /etc/slurm/
     # workaround for copying to munge
@@ -124,12 +128,15 @@ _run_inplace() {
     "$@"
     cd $startLoc
 }
+
 build-slurm-deb() {
     _run_inplace _build-slurm-deb "$@"
 }
+
 rhqaddtorepo() {
     _run_inplace _rhqaddtorepo "$@"
 }
+
 post-install() {
     _run_inplace _post-install "$@"
 }

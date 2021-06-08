@@ -3,7 +3,6 @@ import os
 from .scriptCreator import ScriptCreatorClass
 from .squeue import *
 from .functions import *
-import sys
 
 
 class RHQueueHander:

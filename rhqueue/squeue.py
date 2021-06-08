@@ -1,40 +1,53 @@
-import getpass
-import grp
 import subprocess
 from typing import List
-from .datagrid import DataGridLine, DataGridHandler
-from .printer import GridPrinter
+from .datagrid import DataGridLine
 
 
 class SqueueDataGridHandler:
     def __init__(self):
         super().__init__()
+        import getpass
+        import grp
+        # get users in sudo group
         self.admin = grp.getgrnam("sudo").gr_mem
+        # get current user
         self.user = getpass.getuser()
+        from .datagrid import DataGridHandler
+        # load the data from the queue
         self.data = DataGridHandler()
 
-    @property
     def is_user_admin(self):
         return self.user in self.admin
 
-    def cancel_job(self, job_id):
-        job:DataGridLine = self.data.job_exists(job_id)
-        if not job:
-            print(f"The job {job_id} does not exist")
-            return
+    def cancel_job(self, job_id: str):
+        """function used to cancel a job, first getting the job from the queue, 
+        then checking if the user created the job or the user is part of sudo.
+        Following this will pass the job to the cancel check function
+
+        Args:
+            job_id (str): the id of the job to be cancelled
+        """
+        # get the current job by id
+        job = self.data.get_job_from_id(job_id)
         if self.data.is_user_job(self.user, job):
-            self.cancel_check("scancel {}", job)
-        elif self.is_user_admin:
-            self.cancel_check("sudo -u slurm scancel {}", job)
+            self.cancel_check("scancel {id}", job)
+        elif self.is_user_admin():
+            self.cancel_check("sudo -u slurm scancel {id}", job)
         else:
             print("You do not have the permission to cancel that job")
 
-    def cancel_check(self, cancel_command_struct, job_id:DataGridLine):
+    def cancel_check(self, cancel_command_struct: str, job_id: DataGridLine):
+        """Function that confirms if the use wants to delete from the string for how to call the deletion funciton
 
+        Args:
+            cancel_command_struct (str): the command string for how to delete the job
+            job_id (DataGridLine): the id of the job to be cancelled
+        """
         valid = {"yes": True, "y": True, "no": False, "n": False}
         print(f"job ID: {job_id}")
         while True:
-            choice = input(f"Do you wish delete job {job_id.id}? [y/n]").lower()
+            choice = input(
+                f"Do you wish delete job {job_id.id}? [y/n]").lower()
             if choice in valid:
                 res = valid[choice]
                 break
@@ -42,14 +55,23 @@ class SqueueDataGridHandler:
                 print("Please respond with 'yes' or 'no' "
                       "(or 'y' or 'n').\n")
         if res:
-            subprocess.call([cancel_command_struct.format(job_id.id)], shell=True)
+            subprocess.call([cancel_command_struct.format(id=job_id.id)],
+                            shell=True)
         else:
             print("cancelled script removal")
             exit(0)
-
-    def print_vals(self, job_id=None, verbose=False, columns=[]):
+    
+    def print_vals(self, job_id:str=None, verbose:bool=False, columns:List[str]=[]):
+        from .printer import GridPrinter
         if columns:
-            self.print_info(columns)
+            item_lists = [self.data.running_items, self.data.queued_items]
+            data = [[list(value.get_from_keys(columns).values()) for value in items]
+                    for items in item_lists]
+            headers = [columns] * len(data)
+            GridPrinter(data,
+                        title="Queue Information",
+                        sections=["Running Items", "Items in Queue"],
+                        headers=headers)
         else:
             keys = [
                 "EligibleTime", "SubmitTime", "StartTime", "ExcNodeList",
@@ -63,16 +85,3 @@ class SqueueDataGridHandler:
             ],
                         headers=[["Key", "Value"]],
                         title=f"Information about job:{job_id}")
-
-    def print_info(self, columns):
-        item_lists = [self.data.running_items, self.data.queued_items]
-        data = [[self._get_columns(value, columns) for value in items]
-                for items in item_lists]
-        headers = [columns] * len(data)
-        GridPrinter(data,
-                    title="Queue Information",
-                    sections=["Running Items", "Items in Queue"],
-                    headers=headers)
-
-    def _get_columns(self, line: DataGridLine, columns) -> List[str]:
-        return list(line.get_from_keys(columns).values())

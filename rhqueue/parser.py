@@ -1,9 +1,9 @@
 import argparse
 import os
-from rhqueue.actions import FooAction, ScriptTypeAction
 import sys
+from rhqueue.actions import FooAction, ScriptTypeAction
+from .servers import ServerSet
 from .functions import *
-from .version import __version__
 
 
 class RHQueueParser(object):
@@ -169,5 +169,6 @@ class RHQueueParser(object):
             exit(1)
         self.args = args
         if args.version:
+            from .version import __version__
             print(f"rhqueue {__version__}")
             exit(0)
