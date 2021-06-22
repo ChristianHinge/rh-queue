@@ -4,11 +4,14 @@ export RHQLOCATION="/homes/claes/projects/github/CAAI/rh-queue"
 rhqbuild() {
     cd $RHQLOCATION
     rm -rf ./build
+    sudo chown -R claes:sudo /opt/rh-queue
     python3 setup.py bdist_wheel -d /opt/rh-queue
+    cd $OLDPWD
 }
 
 rhqinstall() {
     rhqbuild
+
     sudo -H -u root python3 -m pip install --upgrade /opt/rh-queue/*.whl --no-cache
     rm /opt/rh-queue/*.whl
 }

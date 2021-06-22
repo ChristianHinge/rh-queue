@@ -156,7 +156,10 @@ class RHQueueParser(object):
                         args.condaVenv = rhq_value
 
             if not args.script_name:
-                args.script_name = args.script_file
+                args.script_name = args.script
+            # Legacy requirement
+            # Needs this when action=ScriptTypeAction was removed from args.script
+            args.script_file = args.script
 
         if args.help:
             self.parser.print_help()

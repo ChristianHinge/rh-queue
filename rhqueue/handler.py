@@ -43,9 +43,9 @@ class RHQueueHander:
 
     def queue(self, args):
 
-        self.check_shebang(args.script_file)
+        # self.check_shebang(args.script_file)
         self.processor.add_scriptline(
-            "srun -n1 {} {}".format(args.full_script,
+            "srun -n1 {} {}".format(args.script,
                                     " ".join(args.args)), 0)
         self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
@@ -59,7 +59,8 @@ class RHQueueHander:
         ]
         self.processor.add_sbatchline("--comment",
                                       f"\"{','.join(comment_list)}\"")
-        self.processor.add_scriptline("chmod +x {}".format(os.path.abspath(args.script_file)), -2)
+        if os.path.exists(args.script_file):
+            self.processor.add_scriptline("chmod +x {}".format(os.path.abspath(args.script_file)), -2)
         self.processor.add_sbatchline("--ntasks", "1")
         self.processor.add_sbatchline("--gres", "gpu:titan:1")
         self.processor.add_sbatchline("-o", args.output_file)
