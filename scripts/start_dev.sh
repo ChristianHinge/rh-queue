@@ -16,6 +16,13 @@ rhqinstall() {
     rm /opt/rh-queue/*.whl
 }
 
+rhqinstall-all(){
+  for server in "${Servers[@]}"; do
+      echo $server
+      ssh $server -q -t "source $RHQLOCATION/scripts/start_dev.sh; rhqinstall"
+  done
+}
+
 rhqtest() {
     cd $RHQLOCATION/testfiles
     for var in "$@"; do
