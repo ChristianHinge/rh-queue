@@ -1,6 +1,6 @@
 Servers=("titan1" "titan2" "titan3" "titan4" "titan5" "titan7")
-export RHQLOCATION="/homes/pmcd/rh-queue"
-export VENVSLOCATION="/homes/pmcd/venv"
+export RHQLOCATION="/homes/claes/projects/github/CAAI/rh-queue"
+#export VENVSLOCATION="/homes/pmcd/venv"
 rhqbuild() {
     cd $RHQLOCATION
     rm -rf ./build
@@ -68,7 +68,7 @@ _prep-prerequisites() {
 _build-slurm-deb() {
     _prep-prerequisites
     sudo mkdir -p /opt/slurm /opt/slurm-src
-    sudo chown -R pmcd.pmcd /opt/slurm /opt/slurm-src
+    sudo chown -R $USER.$USER /opt/slurm /opt/slurm-src
     local slurmBuild="/opt/slurm"
     cd /opt/slurm-src
     local slurmFile="slurm-$1-latest"
@@ -92,15 +92,15 @@ _build-slurm-deb() {
     fpm -s dir -t deb -v ${slurmdEndVersion#slurm-}-1.0 -n slurm-rhqueue --prefix=/usr --config-files=/opt/slurm -C /opt/slurm .
 }
 
-_rhqaddtorepo() {
-    cd /tmp/slurm
-    local slurmdEndVersion=$(ls *.deb)
-    local slurmdEndVersion=${slurmdEndVersion[0]}
-    echo "adding $slurmdEndVersion to repository"
-    sudo cp $slurmdEndVersion /var/www/html/debian
-    cd /var/www/html/debian/
-    sudo sh -c "dpkg-scanpackages . | gzip -c9  > Packages.gz"
-}
+# _rhqaddtorepo() {
+#     cd /tmp/slurm
+#     local slurmdEndVersion=$(ls *.deb)
+#     local slurmdEndVersion=${slurmdEndVersion[0]}
+#     echo "adding $slurmdEndVersion to repository"
+#     sudo cp $slurmdEndVersion /var/www/html/debian
+#     cd /var/www/html/debian/
+#     sudo sh -c "dpkg-scanpackages . | gzip -c9  > Packages.gz"
+# }
 
 install-slurm() {
     sudo apt remove slurm-wlm slurmd slurmctld slurm-wlm-basic-plugins slurm-client

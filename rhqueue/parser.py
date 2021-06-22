@@ -27,7 +27,7 @@ class RHQueueParser(object):
         group = parser_queue.add_mutually_exclusive_group()
         parser_queue.add_argument("script",
                                   metavar="script_file",
-                                  action=ScriptTypeAction,
+                                  #action=ScriptTypeAction,
                                   help="""
           The script to run on a gpu.
           At the top of each file there must be the shebang '#!/usr/bin/env <python_version>'
@@ -39,7 +39,7 @@ class RHQueueParser(object):
                            dest="venv",
                            type=str,
                            help="""
-          The virtual environment used for the project. 
+          The virtual environment used for the project.
           The value is the absolute path to the virtual environment directoy
         """,
                            nargs="?",
@@ -50,7 +50,7 @@ class RHQueueParser(object):
                            dest="condaVenv",
                            type=str,
                            help="""
-        The environment for conda. 
+        The environment for conda.
         This is supposed to be the name of the conda environment.
       """,
                            nargs="?",
@@ -105,7 +105,7 @@ class RHQueueParser(object):
         parser_queue.add_argument("-a",
                                   "--args",
                                   help="""
-        The arguments for the script. 
+        The arguments for the script.
         These are passed to the script to run.
         Pass these in the same method as you would normally
       """,

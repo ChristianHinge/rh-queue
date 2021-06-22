@@ -66,7 +66,7 @@ class DataGridLine(object):
     def is_queued(self):
         return self.info["JobState"] == "PENDING"
 
-    def __getitem__(self, s: int):
+    def __getitem__(self, s: str):
         if s == "Name":
             return self.script_name
         if s == "NodeList":
@@ -114,7 +114,7 @@ class DataGridHandler(object):
             return self.__getitem__(k[0])[k[1]]
         else:
             raise Exception(f"incorrect keys:{k}")
-        
+
     def __len__(self) -> int:
         return len(self.data)
 
