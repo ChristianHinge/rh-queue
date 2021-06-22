@@ -90,7 +90,7 @@ _build-slurm-deb() {
     local slurmdEndVersion=${slurmdEndVersion[0]::-1}
     echo "files ${slurmdEndVersion}"
     cd $slurmdEndVersion
-    local pamLocation=$(find /lib -name '*pam_cap.so' -printf '%h\n')
+    local pamLocation=$(find /lib/ -name '*pam_cap.so' -printf '%h\n')
     ./configure --prefix=/opt/slurm --sysconfdir=/etc/slurm --enable-pam --with-pam_dir=$pamLocation --without-shared-libslurm
     # powerpc64le-unknown-linux-gnu
     # x86_64-pc-linux-gnu
@@ -114,8 +114,7 @@ _build-slurm-deb() {
 
 install-slurm() {
     sudo apt remove slurm-wlm slurmd slurmctld slurm-wlm-basic-plugins slurm-client
-    cp ~/slurm-rhqueue_20.11.5-1.0_amd64.deb /tmp
-    sudo apt install /tmp/slurm-rhqueue_20.11.5-1.0_amd64.deb
+    sudo apt install /opt/slurm-src/slurm-rhqueue_*.deb
     _post-install
 }
 
@@ -125,6 +124,9 @@ _post-install() {
     cd $RHQLOCATION/slurm-install-files/
     sudo cp *.conf /etc/slurm/
     # workaround for copying to munge
+    if [ -f "/tmp/munge.key" ]; then
+      sudo rm /tmp/munge.key
+    fi
     cp *.key /tmp
     sudo cp /tmp/*.key /etc/munge
     sudo cp *.service /etc/systemd/system/
