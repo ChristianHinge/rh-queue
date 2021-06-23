@@ -20,7 +20,7 @@ class SqueueDataGridHandler:
         return self.user in self.admin
 
     def cancel_job(self, job_id: str):
-        """function used to cancel a job, first getting the job from the queue, 
+        """function used to cancel a job, first getting the job from the queue,
         then checking if the user created the job or the user is part of sudo.
         Following this will pass the job to the cancel check function
 
@@ -60,7 +60,7 @@ class SqueueDataGridHandler:
         else:
             print("cancelled script removal")
             exit(0)
-    
+
     def print_vals(self, job_id:str=None, verbose:bool=False, columns:List[str]=[]):
         from .printer import GridPrinter
         if columns:

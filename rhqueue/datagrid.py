@@ -102,8 +102,8 @@ class DataGridHandler(object):
     def get_user_jobs(self, user):
         return [line for line in self.data if line.user == user]
 
-    def is_user_job(self, user, job_id):
-        return job_id in [line.id for line in self.get_user_jobs(user)]
+    def is_user_job(self, user, job):
+        return job.id in [line.id for line in self.get_user_jobs(user)]
 
     def __getitem__(self, k):
         if isinstance(k, str):
