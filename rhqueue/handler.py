@@ -62,7 +62,12 @@ class RHQueueHander:
         if os.path.exists(args.script_file):
             self.processor.add_scriptline("chmod +x {}".format(os.path.abspath(args.script_file)), -2)
         self.processor.add_sbatchline("--ntasks", "1")
-        self.processor.add_sbatchline("--gres", "gpu:titan:1")
+
+        if args.servers is not None and 'ibm' in args.servers.partition_as_list():
+            self.processor.add_sbatchline("--gres", "gpu:4")
+            self.processor.add_sbatchline("--partition", "ibm")
+        else:
+            self.processor.add_sbatchline("--gres", "gpu:titan:1")
         self.processor.add_sbatchline("-o", args.output_file)
         self.processor.add_sbatchline(
             "--job-name",
@@ -77,7 +82,7 @@ class RHQueueHander:
             self.processor.add_scriptline(
                 f"export SLURM_OUTPUT_FILE='{args.output_file}'", -9)
             self.processor.add_scriptline(
-                f"export SLURM_SCRIPT='{args.full_script}'", -8)
+                f"export SLURM_SCRIPT='{args.script}'", -8)
             self.processor.add_scriptline(
                 f"export SLURM_SCRIPT_ARGS='{' '.join(args.args)}'", -8)
             self.processor.add_scriptline(

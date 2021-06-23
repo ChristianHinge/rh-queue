@@ -47,7 +47,7 @@ class ServerSet(set):
             partition.append(name)
             inner_regex = r"((\d+)-?(\d+)?)+"
             for _, start, stop in re.findall(inner_regex, whole):
-            
+
                 try:
                     start = int(start)
                     stop = int(stop)
@@ -91,3 +91,6 @@ class ServerSet(set):
 
     def as_set(self):
         return self._set
+
+    def partition_as_list(self):
+        return list(sorted(self._partition))

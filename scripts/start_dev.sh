@@ -1,9 +1,12 @@
-Servers=("titan1" "titan2" "titan3" "titan4" "titan5" "titan7")
+Servers=("titan1" "titan2" "titan3" "titan4" "titan5" "titan7" "ibm1" "ibm2")
 export RHQLOCATION="/homes/claes/projects/github/CAAI/rh-queue"
 #export VENVSLOCATION="/homes/pmcd/venv"
 rhqbuild() {
     cd $RHQLOCATION
     rm -rf ./build
+    if [ ! -d "/opt/rh-queue" ]; then
+      sudo mkdir /opt/rh-queue
+    fi
     sudo chown -R claes:sudo /opt/rh-queue
     python3 setup.py bdist_wheel -d /opt/rh-queue
     cd $OLDPWD
@@ -11,7 +14,6 @@ rhqbuild() {
 
 rhqinstall() {
     rhqbuild
-
     sudo -H -u root python3 -m pip install --upgrade /opt/rh-queue/*.whl --no-cache
     rm /opt/rh-queue/*.whl
 }
@@ -53,6 +55,12 @@ slurm-update-conf() {
     sudo cp gres.conf /etc/slurm
     sudo cp cgroup.conf /etc/slurm
     cd $OLDPWD
+}
+slurm-update-conf-all(){
+  for server in "${Servers[@]}"; do
+      echo $server
+      ssh $server -q -t "source $RHQLOCATION/scripts/start_dev.sh; slurm-update-conf"
+  done
 }
 
 slurm-state() {
@@ -127,8 +135,9 @@ _post-install() {
     if [ -f "/tmp/munge.key" ]; then
       sudo rm /tmp/munge.key
     fi
-    cp *.key /tmp
-    sudo cp /tmp/*.key /etc/munge
+    cp munge.key /tmp
+    sudo cp /tmp/munge.key /etc/munge
+    sudo chown munge.munge /etc/munge/munge.key
     sudo cp *.service /etc/systemd/system/
     sudo cp *.service /lib/systemd/system/
     sudo systemctl unmask slurmd
