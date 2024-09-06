@@ -17,8 +17,14 @@ Create slurm pid directory
     sudo mkdir /var/run/slurm-llnl/
     sudo chown -R slurm.slurm /var/run/slurm-llnl
 
+Create slurm usr/lib directory
+
+    sudo mkdir /usr/lib/slurm/
+    sudo chown -R slurm.slurm /usr/lib/slurm
+
 Fix `/var/spool/slurmd`
 
+    sudo mkdir /var/spool/slurmd/
     sudo chown -R slurm.slurm /var/spool/slurmd
 
 Add slurm to root
@@ -61,7 +67,7 @@ Update slurm with .conf changes (on all nodes):
 setup munge:
 
     sudo mkdir /opt/munge
-    sudo chown -R pmcd:pmcd /opt/munge
+    sudo chown -R petadmin:petadmin /opt/munge
     cp ./munge.key /opt/munge/
     sudo chown -R root:root /opt/munge
     sudo cp /opt/munge/munge.key /etc/munge/munge.key
