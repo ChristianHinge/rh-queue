@@ -66,12 +66,16 @@ class RHQueueHander:
         # GPUs
         if args.servers is not None:
             
-            if 'hpc4' in args.servers.partition_as_list():
-                self.processor.add_sbatchline("--partition", "hpc4")
+            servers = args.servers.as_list()
+            if 'depict1' in servers and not 'depict2' in servers:
+                self.processor.add_sbatchline("--partition", "depict")
                 self.processor.add_sbatchline("--gpus-per-node", "a40:4")
-            elif 'hpc3' in args.servers.partition_as_list():
-                self.processor.add_sbatchline("--partition", "hpc3")
+            elif 'depict1' not in servers and 'depict2' in servers:
+                self.processor.add_sbatchline("--partition", "depict")
                 self.processor.add_sbatchline("--gpus-per-node", "l40s:3")
+            elif 'depict1' in servers and 'depict2' in servers:
+                self.processor.add_sbatchline("--partition", "depict")
+                self.processor.add_sbatchline("--gpus-per-node", "1")
             else:
                 raise ValueError('Server not recognized:', args.servers.partition_as_list())
         else:
