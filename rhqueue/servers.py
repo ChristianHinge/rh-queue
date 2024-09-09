@@ -49,7 +49,7 @@ class ServerSet(set):
             partition.append(name)
             inner_regex = r"((\d+)-?(\d+)?)+"
             for _, start, stop in re.findall(inner_regex, whole):
-                print(start, stop)
+                print("startstop",start, stop)
 
                 try:
                     start = int(start)
@@ -59,7 +59,7 @@ class ServerSet(set):
                     stop = int(start)
                 for i in range(start, stop + 1):
                         servers.append(f"{name}{i}")
-                        print(f"{name}{i}")
+                        print(f"Added server name: {name}{i}")
         return cls(servers, partition)
 
     def to_slurm_list(self):
