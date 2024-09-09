@@ -66,10 +66,10 @@ class RHQueueHander:
         # GPUs
         if args.servers is not None:
             
-            if 'depict1' in args.servers.partition_as_list():
+            if 'hpc4' in args.servers.partition_as_list():
                 self.processor.add_sbatchline("--partition", "hpc4")
                 self.processor.add_sbatchline("--gpus-per-node", "a40:4")
-            elif 'depict2' in args.servers.partition_as_list():
+            elif 'hpc3' in args.servers.partition_as_list():
                 self.processor.add_sbatchline("--partition", "hpc3")
                 self.processor.add_sbatchline("--gpus-per-node", "l40s:3")
             else:
