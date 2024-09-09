@@ -21,6 +21,7 @@ def get_servers(partition=None):
 class ServerSet(set):
 
     def __init__(self, servers, partitions=[]):
+        print("INIT:",partitions)
         default_servers = set(p for partition in partitions
                               for p in get_servers(partition))
         if len(servers) == 0:
