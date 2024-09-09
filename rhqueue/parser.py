@@ -100,6 +100,7 @@ class RHQueueParser(object):
             "-s",
             "--servers",
             type=ServerSet.from_slurm_list,
+            required=True,
             help="Define the servers that the script can run on.")
 
         parser_queue.add_argument("-a",
