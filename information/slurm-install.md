@@ -17,10 +17,9 @@ Create slurm pid directory
     sudo mkdir /var/run/slurm-llnl/
     sudo chown -R slurm.slurm /var/run/slurm-llnl
 
-Create slurm usr/lib directory
+Fix SLURM not finding plugin for select/cons_tres:
 
-    sudo mkdir /usr/lib/slurm/
-    sudo chown -R slurm.slurm /usr/lib/slurm
+    sudo ln -s /usr/lib/x86_64-linux-gnu/slurm-wlm /usr/lib/slurm
 
 Fix `/var/spool/slurmd`
 
@@ -61,13 +60,14 @@ copy slurm.conf and gres.conf (on all nodes):
 
 Update slurm with .conf changes (on all nodes):
     sudo systemctl restart slurmctld
-    sudo systemctl restart slurmctld
+    sudo systemctl restart slurmd
     sudo scontrol reconfigure
 
 setup munge:
 
     sudo mkdir /opt/munge
     sudo chown -R petadmin:petadmin /opt/munge
+    # mungekey -c -k ./munge.key
     cp ./munge.key /opt/munge/
     sudo chown -R root:root /opt/munge
     sudo cp /opt/munge/munge.key /etc/munge/munge.key

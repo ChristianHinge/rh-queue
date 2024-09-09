@@ -1,6 +1,5 @@
-Servers=("titan1" "titan2" "titan3" "titan4" "titan5" "titan7" "ibm1" "ibm2")
-export RHQLOCATION="/homes/claes/projects/github/CAAI/rh-queue"
-#export VENVSLOCATION="/homes/pmcd/venv"
+Servers=("depict1 depict2")
+export RHQLOCATION="/home/petadmin/rh-queue"
 rhqbuild() {
     cd $RHQLOCATION
     rm -rf ./build
