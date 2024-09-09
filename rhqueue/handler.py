@@ -64,17 +64,18 @@ class RHQueueHander:
         self.processor.add_sbatchline("--ntasks", "1")
         
         # GPUs
-        self.processor.add_sbatchline("--partition", "depict")
         if args.servers is not None:
             
             if 'depict1' in args.servers.partition_as_list():
+                self.processor.add_sbatchline("--partition", "hpc4")
                 self.processor.add_sbatchline("--gpus-per-node", "a40:4")
             elif 'depict2' in args.servers.partition_as_list():
+                self.processor.add_sbatchline("--partition", "hpc3")
                 self.processor.add_sbatchline("--gpus-per-node", "l40s:3")
             else:
                 raise ValueError('Server not recognized:', args.servers.partition_as_list())
         else:
-            self.processor.add_sbatchline("--gpus-per-node", "1")
+            raise ValueError('Server needs to be specified')
         self.processor.add_sbatchline("-o", args.output_file)
         self.processor.add_sbatchline(
             "--job-name",
