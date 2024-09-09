@@ -46,7 +46,10 @@ class ServerSet(set):
         """
         servers = []
         partition = []
-        regex = r"([a-z0-9]+)(\[(\d+,?|\d+[-]\d*)+\]|\d)"
+        regex = r"([a-z]+)(\[(\d+,?|\d+[-]\d*)+\]|\d)"
+        
+        print(string)
+        
         for name, whole, _ in re.findall(regex, string):
             partition.append(name)
             inner_regex = r"((\d+)-?(\d+)?)+"
@@ -60,6 +63,8 @@ class ServerSet(set):
                     stop = int(start)
                 for i in range(start, stop + 1):
                         servers.append(f"{name}{i}")
+                        
+        print("from..", servers, partition)
         return cls(servers, partition)
 
     def to_slurm_list(self):
