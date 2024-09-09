@@ -46,7 +46,7 @@ class ServerSet(set):
         """
         servers = []
         partition = []
-        regex = r"([a-z]+)(\[(\d+,?|\d+[-]\d*)+\]|\d)"
+        regex = r"([a-z0-9]+)(\[(\d+,?|\d+[-]\d*)+\]|\d)"
         for name, whole, _ in re.findall(regex, string):
             partition.append(name)
             inner_regex = r"((\d+)-?(\d+)?)+"
