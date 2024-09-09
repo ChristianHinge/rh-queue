@@ -4,7 +4,7 @@ import itertools
 
 
 def get_servers(partition=None):
-    print(partition)
+    print("GET_SERVERS:",partition)
     command = "sinfo -N" if partition is None else f"sinfo -N -p {partition}"
     res_str = subprocess.run(command, shell=True,
                              stdout=subprocess.PIPE).stdout.decode("utf-8")
@@ -29,6 +29,7 @@ class ServerSet(set):
             self.default_servers = default_servers
         self._set = set(servers)
         self._partition = partitions
+        print("INIT:",partitions)
         super().__init__(servers)
 
     @classmethod
