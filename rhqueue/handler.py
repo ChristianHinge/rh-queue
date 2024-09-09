@@ -113,11 +113,6 @@ class RHQueueHander:
             res = subprocess.run(self.processor.get_script_command_line(),
                                  stdout=subprocess.PIPE,
                                  shell=True)
-            with open('./script.sh', 'r') as file:
-                # Read the content of the file
-                file_content = file.read()
-                # Print the content
-                print("File Content:\n", file_content)
             subprocess.call(["rm ./script.sh"],
                             stdout=subprocess.PIPE,
                             shell=True)
