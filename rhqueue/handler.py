@@ -63,20 +63,18 @@ class RHQueueHander:
             self.processor.add_scriptline("chmod +x {}".format(os.path.abspath(args.script_file)), -2)
         self.processor.add_sbatchline("--ntasks", "1")
         
+        # GPUs
         self.processor.add_sbatchline("--partition", "depict")
         if servers is not None:
             
             if 'depict1' in args.servers.partition_as_list():
-                max_num_GPUs = 4
+                self.processor.add_sbatchline("--gpus-per-node", "a40:4")
             elif 'depict2' in args.servers.partition_as_list():
-                max_num_GPUs = 3
+                self.processor.add_sbatchline("--gpus-per-node", "l40s:3")
             else:
                 raise ValueError('Server not recognized')
-            
-            self.processor.add_sbatchline("--partition", "depict")
-            self.processor.add_sbatchline("--gres", f"gpu:{max_num_GPUs}")
         else:
-            self.processor.add_sbatchline("--gres", "gpu:1")
+            self.processor.add_sbatchline("--gpus-per-node", "1")
         self.processor.add_sbatchline("-o", args.output_file)
         self.processor.add_sbatchline(
             "--job-name",
