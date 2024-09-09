@@ -72,7 +72,7 @@ class RHQueueHander:
             elif 'depict2' in args.servers.partition_as_list():
                 self.processor.add_sbatchline("--gpus-per-node", "l40s:3")
             else:
-                raise ValueError('Server not recognized')
+                raise ValueError('Server not recognized:', args.servers.partition_as_list())
         else:
             self.processor.add_sbatchline("--gpus-per-node", "1")
         self.processor.add_sbatchline("-o", args.output_file)
