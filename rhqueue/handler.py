@@ -81,6 +81,7 @@ class RHQueueHander:
         else:
             raise ValueError('Server needs to be specified')
         self.processor.add_sbatchline("-o", args.output_file)
+        self.processor.add_sbatchline("-e", args.output_file.replace('.stdout','_err.stdout'))
         self.processor.add_sbatchline(
             "--job-name",
             args.script_name if args.script_name else args.script_file)
