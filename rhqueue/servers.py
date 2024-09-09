@@ -40,16 +40,14 @@ class ServerSet(set):
         Returns:
             ServerSet: The ServerSet from the string passed
         """
-        print("FSL:",string)
         servers = []
         partition = []
         regex = r"([a-z]+)(\[(\d+,?|\d+[-]\d*)+\]|\d)"
         for name, whole, _ in re.findall(regex, string):
             print(name, whole)
-            #partition.append(name)
+            partition.append(name)
             inner_regex = r"((\d+)-?(\d+)?)+"
             for _, start, stop in re.findall(inner_regex, whole):
-                print("startstop",start, stop)
 
                 try:
                     start = int(start)
@@ -60,10 +58,6 @@ class ServerSet(set):
                 for i in range(start, stop + 1):
                         servers.append(f"{name}{i}")
                         
-                        # Add partition:
-                        server_name = f"{name}{i}"
-                        partition_name = 'hpc4' if server_name == 'depict1' else 'hpc3'
-                        partition.append(partition_name)
         return cls(servers, partition)
 
     def to_slurm_list(self):
