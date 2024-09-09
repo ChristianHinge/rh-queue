@@ -6,7 +6,7 @@ rhqbuild() {
     if [ ! -d "/opt/rh-queue" ]; then
       sudo mkdir /opt/rh-queue
     fi
-    sudo chown -R claes:sudo /opt/rh-queue
+    sudo chown -R petadmin:sudo /opt/rh-queue
     python3 setup.py bdist_wheel -d /opt/rh-queue
     cd $OLDPWD
 }
