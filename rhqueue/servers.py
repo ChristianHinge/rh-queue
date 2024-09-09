@@ -4,6 +4,7 @@ import itertools
 
 
 def get_servers(partition=None):
+    print(partition)
     command = "sinfo -N" if partition is None else f"sinfo -N -p {partition}"
     res_str = subprocess.run(command, shell=True,
                              stdout=subprocess.PIPE).stdout.decode("utf-8")
