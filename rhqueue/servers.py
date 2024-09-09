@@ -31,6 +31,7 @@ class ServerSet(set):
         self._set = set(servers)
         self._partition = partitions
         print("INIT:",partitions)
+        print("INIT_DEFAULT_SERVERS:",self.default_servers)
         super().__init__(servers)
 
     @classmethod
@@ -96,4 +97,5 @@ class ServerSet(set):
         return self._set
 
     def partition_as_list(self):
+        print("AS_LIST:", list(sorted(self._partition)))
         return list(sorted(self._partition))
