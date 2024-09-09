@@ -4,7 +4,6 @@ import itertools
 
 
 def get_servers(partition=None):
-    print("GET_SERVERS:",partition)
     command = "sinfo -N" if partition is None else f"sinfo -N -p {partition}"
     res_str = subprocess.run(command, shell=True,
                              stdout=subprocess.PIPE).stdout.decode("utf-8")
@@ -21,7 +20,6 @@ def get_servers(partition=None):
 class ServerSet(set):
 
     def __init__(self, servers, partitions=[]):
-        print("INIT:",partitions)
         default_servers = set(p for partition in partitions
                               for p in get_servers(partition))
         if len(servers) == 0:
@@ -30,8 +28,6 @@ class ServerSet(set):
             self.default_servers = default_servers
         self._set = set(servers)
         self._partition = partitions
-        print("INIT:",partitions)
-        print("INIT_DEFAULT_SERVERS:",self.default_servers)
         super().__init__(servers)
 
     @classmethod
@@ -47,9 +43,6 @@ class ServerSet(set):
         servers = []
         partition = []
         regex = r"([a-z]+)(\[(\d+,?|\d+[-]\d*)+\]|\d)"
-        
-        print(string)
-        
         for name, whole, _ in re.findall(regex, string):
             partition.append(name)
             inner_regex = r"((\d+)-?(\d+)?)+"
@@ -63,8 +56,6 @@ class ServerSet(set):
                     stop = int(start)
                 for i in range(start, stop + 1):
                         servers.append(f"{name}{i}")
-                        
-        print("from..", servers, partition)
         return cls(servers, partition)
 
     def to_slurm_list(self):
@@ -102,5 +93,4 @@ class ServerSet(set):
         return self._set
 
     def partition_as_list(self):
-        print("AS_LIST:", list(sorted(self._partition)))
         return list(sorted(self._partition))
