@@ -102,6 +102,19 @@ class RHQueueParser(object):
             type=ServerSet.from_slurm_list,
             required=True,
             help="Define the servers that the script can run on.")
+        
+        parser_queue.add_argument(
+            "--gpus",
+            type=int,
+            choices=[0, 1, 2, 3, 4],
+            default=None,
+            help="Define the number of GPUs pr task. Default is all available GPUs if you do not specify")
+        
+        parser_queue.add_argument(
+            "--cpus",
+            type=int,
+            default=None,
+            help="Define the number of CPUs pr task (should be 2 x GPU count at least). Default is all available CPUs if you do not specify. depict1 has 64, depict2 has 32")
 
         parser_queue.add_argument("-a",
                                   "--args",

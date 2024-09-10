@@ -67,15 +67,17 @@ class RHQueueHander:
         if args.servers is not None:
             
             servers = args.servers.as_list()
+            self.processor.add_sbatchline("--partition", "depict")
             if 'depict1' in servers and not 'depict2' in servers:
-                self.processor.add_sbatchline("--partition", "depict")
                 self.processor.add_sbatchline("--gpus-per-node", "a40:4")
             elif 'depict1' not in servers and 'depict2' in servers:
-                self.processor.add_sbatchline("--partition", "depict")
                 self.processor.add_sbatchline("--gpus-per-node", "l40s:3")
             elif 'depict1' in servers and 'depict2' in servers:
-                self.processor.add_sbatchline("--partition", "depict")
-                self.processor.add_sbatchline("--gpus-per-node", "1")
+                if not args.gpus is None or args.cpus is None:
+                    print("You need to specify the number of GPUs and CPUs when you do not select a specific server")
+                    exit(1)
+                self.processor.add_sbatchline("--gpus-per-node", f"{args.gpus}")
+                self.processor.add_sbatchline("--cpus-per-task", f"{args.cpus}")
             else:
                 raise ValueError('Server not recognized:', args.servers.as_list())
         else:
