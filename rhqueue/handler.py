@@ -69,19 +69,21 @@ class RHQueueHander:
             servers = args.servers.as_list()
             self.processor.add_sbatchline("--partition", "depict")
             if 'depict1' in servers and not 'depict2' in servers:
-                self.processor.add_sbatchline("--gpus-per-node", "a40:4")
+                num_gpus = 4 if args.gpus is None else args.gpus
+                self.processor.add_sbatchline("--gpus-per-node", f"a40:{num_gpus}")
             elif 'depict1' not in servers and 'depict2' in servers:
-                self.processor.add_sbatchline("--gpus-per-node", "l40s:3")
-            elif 'depict1' in servers and 'depict2' in servers:
+                num_gpus = 3 if args.gpus is None else args.gpus
+                self.processor.add_sbatchline("--gpus-per-node", f"l40s:{num_gpus}")
+            else:
                 if args.gpus is None or args.cpus is None:
                     print("You need to specify the number of GPUs and CPUs when you do not select a specific server")
                     exit(1)
                 self.processor.add_sbatchline("--gpus-per-node", f"{args.gpus}")
-                self.processor.add_sbatchline("--cpus-per-task", f"{args.cpus}")
-            else:
-                raise ValueError('Server not recognized:', args.servers.as_list())
         else:
             raise ValueError('Server needs to be specified')
+        if args.cpus:
+            self.processor.add_sbatchline("--cpus-per-task", f"{args.cpus}")
+        
         self.processor.add_sbatchline("-o", args.output_file)
         self.processor.add_sbatchline(
             "--job-name",
