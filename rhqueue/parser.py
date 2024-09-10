@@ -106,7 +106,7 @@ class RHQueueParser(object):
         parser_queue.add_argument(
             "--gpus",
             type=int,
-            choices=[0, 1, 2, 3, 4],
+            choices=[1, 2, 3, 4],
             default=None,
             help="Define the number of GPUs pr task. Default is all available GPUs if you do not specify")
         

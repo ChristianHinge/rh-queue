@@ -70,23 +70,20 @@ class RHQueueHander:
             self.processor.add_sbatchline("--partition", "depict")
             if 'depict1' in servers and not 'depict2' in servers:
                 num_gpus = 4 if args.gpus is None else args.gpus
-                if num_gpus > 0:
-                    self.processor.add_sbatchline("--gpus-per-node", f"a40:{num_gpus}")
+                self.processor.add_sbatchline("--gpus-per-node", f"a40:{num_gpus}")
                 # depict 1 has max 64 cpus. Here we allocate 12 pr GPU, so max 48
                 cpus = 12*num_gpus if not args.cpus else args.cpus 
                 
             elif 'depict1' not in servers and 'depict2' in servers:
                 num_gpus = 3 if args.gpus is None else args.gpus
-                if num_gpus > 0:
-                    self.processor.add_sbatchline("--gpus-per-node", f"l40s:{num_gpus}")
+                self.processor.add_sbatchline("--gpus-per-node", f"l40s:{num_gpus}")
                 # depict 2 has max 32 cpus. Here we allocate 6 pr GPU, so max 24
                 cpus = 6*num_gpus if not args.cpus else args.cpus
             else:
                 if args.gpus is None or args.cpus is None:
                     print("You need to specify the number of GPUs and CPUs when you do not select a specific server")
                     exit(1)
-                if num_gpus > 0:
-                    self.processor.add_sbatchline("--gpus-per-node", f"{args.gpus}")
+                self.processor.add_sbatchline("--gpus-per-node", f"{args.gpus}")
                 cpus = args.cpus
         else:
             raise ValueError('Server needs to be specified')
