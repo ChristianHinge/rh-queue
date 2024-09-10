@@ -73,7 +73,7 @@ class RHQueueHander:
             elif 'depict1' not in servers and 'depict2' in servers:
                 self.processor.add_sbatchline("--gpus-per-node", "l40s:3")
             elif 'depict1' in servers and 'depict2' in servers:
-                if not args.gpus is None or args.cpus is None:
+                if args.gpus is None or args.cpus is None:
                     print("You need to specify the number of GPUs and CPUs when you do not select a specific server")
                     exit(1)
                 self.processor.add_sbatchline("--gpus-per-node", f"{args.gpus}")
