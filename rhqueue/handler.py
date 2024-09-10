@@ -45,7 +45,7 @@ class RHQueueHander:
 
         # self.check_shebang(args.script_file)
         self.processor.add_scriptline(
-            "srun -n1 {} {}".format(args.script,
+            "srun --kill-on-bad-exit=1 {} {}".format(args.script,
                                     " ".join(args.args)), 0)
         self.processor.add_scriptline("export PYTHONUNBUFFERED=1", -10)
 
@@ -61,32 +61,37 @@ class RHQueueHander:
                                       f"\"{','.join(comment_list)}\"")
         if os.path.exists(args.script_file):
             self.processor.add_scriptline("chmod +x {}".format(os.path.abspath(args.script_file)), -2)
-        self.processor.add_sbatchline("--ntasks", "1")
         
         # GPUs
+        num_gpus = None
         if args.servers is not None:
             
             servers = args.servers.as_list()
             self.processor.add_sbatchline("--partition", "depict")
             if 'depict1' in servers and not 'depict2' in servers:
                 num_gpus = 4 if args.gpus is None else args.gpus
-                self.processor.add_sbatchline("--gpus-per-node", f"a40:{num_gpus}")
+                self.processor.add_sbatchline("--gpus", f"a40:{num_gpus}")
                 # depict 1 has max 64 cpus. Here we allocate 12 pr GPU, so max 48
-                cpus = 12*num_gpus if not args.cpus else args.cpus 
+                cpus = 12 if not args.cpus else args.cpus 
                 
             elif 'depict1' not in servers and 'depict2' in servers:
                 num_gpus = 3 if args.gpus is None else args.gpus
-                self.processor.add_sbatchline("--gpus-per-node", f"l40s:{num_gpus}")
+                self.processor.add_sbatchline("--gpus", f"l40s:{num_gpus}")
                 # depict 2 has max 32 cpus. Here we allocate 6 pr GPU, so max 24
-                cpus = 6*num_gpus if not args.cpus else args.cpus
+                cpus = 6 if not args.cpus else args.cpus
             else:
                 if args.gpus is None or args.cpus is None:
                     print("You need to specify the number of GPUs and CPUs when you do not select a specific server")
                     exit(1)
-                self.processor.add_sbatchline("--gpus-per-node", f"{args.gpus}")
+                self.processor.add_sbatchline("--gpus", f"{args.gpus}")
                 cpus = args.cpus
         else:
             raise ValueError('Server needs to be specified')
+        if num_gpus is None:
+            num_tasks = 1
+        else:
+            num_tasks = num_gpus
+        self.processor.add_sbatchline("--ntasks-per-node", f"{num_tasks}")
         self.processor.add_sbatchline("--cpus-per-task", f"{cpus}")
         
         self.processor.add_sbatchline("-o", args.output_file)
